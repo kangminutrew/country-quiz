@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>독도 삼행시 관리자</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f1f6fc;
+  color: #19334f;
+}
+header {
+  background: linear-gradient(120deg,#123b70,#1976a8);
+  color: white;
+  padding: 28px 20px;
+  text-align: center;
+}
+header h1 { margin: 0 0 8px; }
+header p { margin: 0; opacity: .85; }
+.container {
+  max-width: 1000px;
+  margin: 25px auto;
+  padding: 0 16px;
+}
+.panel {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 18px #163b6412;
+}
+h2 { margin-top: 0; }
+input {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ccd8e5;
+  border-radius: 9px;
+  margin: 7px 0 13px;
+  font-size: 15px;
+}
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 18px;
+  background: #1769aa;
+  color: white;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 4px;
+}
+button:hover { opacity: .88; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.logout { background: #66788a; }
+.draw { background: #d18a20; }
+.status { color: #526b82; margin-top: 12px; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 14px;
+}
+.stat {
+  background: #edf5fc;
+  border-radius: 12px;
+  padding: 18px;
+}
+.stat small { color: #60758a; }
+.stat strong {
+  display: block;
+  font-size: 30px;
+  margin-top: 8px;
+}
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 450px;
+}
+th,td {
+  padding: 13px 10px;
+  border-bottom: 1px solid #e6edf4;
+  text-align: left;
+}
+th { background: #f3f7fb; }
+.winner { color: #c17b13; font-weight: bold; }
+.hidden { display: none; }
+#result {
+  background: #fff7e8;
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 15px;
+  text-align: center;
+  font-size: 19px;
+  font-weight: bold;
+}
+@media(max-width:600px) {
+  .cards { grid-template-columns: 1fr; }
+  .panel { padding: 17px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🇰🇷 독도 삼행시 관리자</h1>
+  <p>참가자 관리 및 당첨자 추첨</p>
+</header>
+
+<div class="container">
+
+  <section class="panel" id="loginPanel">
+    <h2>관리자 로그인</h2>
+    <p>나라 찾기 관리자 계정으로 로그인하세요.</p>
+    <input id="email" type="email" placeholder="관리자 이메일">
+    <input id="password" type="password" placeholder="비밀번호">
+    <button id="loginBtn" onclick="login()">로그인</button>
+    <p class="status" id="loginStatus"></p>
+  </section>
+
+  <section id="dashboard" class="hidden">
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <h2>관리자 대시보드</h2>
+        <button class="logout" onclick="logout()">로그아웃</button>
+      </div>
+      <p>독도 삼행시 참가자 현황</p>
+      <button onclick="loadEntries()">새로고침</button>
+    </div>
+
+    <div class="panel">
+      <div class="cards">
+        <div class="stat">
+          <small>전체 참가자</small>
+          <strong id="totalCount">0명</strong>
+        </div>
+        <div class="stat">
+          <small>추첨 완료</small>
+          <strong id="drawnCount">0명</strong>
+        </div>
+        <div class="stat">
+          <small>추첨 대기</small>
+          <strong id="waitingCount">0명</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>🎯 당첨자 추첨</h2>
+      <p>아직 당첨되지 않은 참가자 중 한 명을 무작위로 추첨합니다.</p>
+      <button class="draw" id="drawBtn" onclick="drawWinner()">당첨자 추첨하기</button>
+      <div id="result" class="hidden"></div>
+      <p class="status" id="drawStatus"></p>
+    </div>
+
+    <div class="panel">
+      <h2>👥 참가자 명단</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>번호</th>
+              <th>학번</th>
+              <th>이름</th>
+              <th>상태</th>
+              <th>등록 시간</th>
+            </tr>
+          </thead>
+          <tbody id="participantList">
+            <tr><td colspan="5">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="status" id="listStatus"></p>
+    </div>
+
+  </section>
+</div>
+
+<script>
+const SUPABASE_URL = "https://grjysehvlabnyenorkfp.supabase.co";
+const SUPABASE_KEY = "sb_publishable_L-X2UFs2cCARxgd14Fw2IQ_4MAEePxJ";
+const ADMIN_UID = "3b8ad1c7-6487-462a-984a-0788b88747cd";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const $ = id => document.getElementById(id);
+
+function showDashboard() {
+  $("loginPanel").classList.add("hidden");
+  $("dashboard").classList.remove("hidden");
+  loadEntries();
+}
+
+function showLogin() {
+  $("dashboard").classList.add("hidden");
+  $("loginPanel").classList.remove("hidden");
+}
+
+async function login() {
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if (!email || !password) {
+    $("loginStatus").textContent = "이메일과 비밀번호를 입력하세요.";
+    return;
+  }
+
+  $("loginBtn").disabled = true;
+  $("loginStatus").textContent = "로그인 중...";
+
+  try {
+    const { data, error } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+
+    if (!data.user || data.user.id !== ADMIN_UID) {
+      await db.auth.signOut();
+      throw new Error("관리자 계정이 아닙니다.");
+    }
+
+    $("loginStatus").textContent = "";
+    showDashboard();
+
+  } catch (error) {
+    $("loginStatus").textContent = "로그인 실패: " + error.message;
+  } finally {
+    $("loginBtn").disabled = false;
+  }
+}
+
+async function logout() {
+  await db.auth.signOut();
+  $("password").value = "";
+  showLogin();
+}
+
+async function checkSession() {
+  const { data, error } = await db.auth.getSession();
+
+  if (error) {
+    showLogin();
+    return;
+  }
+
+  const user = data.session?.user;
+
+  if (user && user.id === ADMIN_UID) {
+    showDashboard();
+  } else {
+    if (user) await db.auth.signOut();
+    showLogin();
+  }
+}
+
+async function loadEntries() {
+  $("listStatus").textContent = "참가자 정보를 불러오는 중...";
+  $("participantList").innerHTML =
+    '<tr><td colspan="5">불러오는 중...</td></tr>';
+
+  const { data: userData } = await db.auth.getUser();
+
+  if (!userData.user || userData.user.id !== ADMIN_UID) {
+    showLogin();
+    return;
+  }
+
+  const { data, error } = await db.rpc("dokdo_admin_list_entries");
+
+  if (error) {
+    $("listStatus").textContent = "조회 실패: " + error.message;
+    $("participantList").innerHTML =
+      '<tr><td colspan="5">정보를 불러오지 못했습니다.</td></tr>';
+    return;
+  }
+
+  const entries = data || [];
+  const drawn = entries.filter(e => e.drawn_at);
+  const waiting = entries.filter(e => !e.drawn_at);
+
+  $("totalCount").textContent = entries.length + "명";
+  $("drawnCount").textContent = drawn.length + "명";
+  $("waitingCount").textContent = waiting.length + "명";
+
+  if (entries.length === 0) {
+    $("participantList").innerHTML =
+      '<tr><td colspan="5">등록된 참가자가 없습니다.</td></tr>';
+  } else {
+    $("participantList").innerHTML = entries.map((entry, index) => {
+      const info = (entry.student_info || "").trim();
+      const firstSpace = info.indexOf(" ");
+      const studentId = firstSpace === -1 ? info : info.slice(0, firstSpace);
+      const studentName = firstSpace === -1 ? "" : info.slice(firstSpace + 1);
+
+      const status = entry.drawn_at
+        ? '<span class="winner">당첨</span>'
+        : "대기";
+
+      const date = new Date(entry.created_at).toLocaleString("ko-KR");
+
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeHTML(studentId)}</td>
+          <td>${escapeHTML(studentName)}</td>
+          <td>${status}</td>
+          <td>${date}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  $("listStatus").textContent =
+    "마지막 업데이트: " + new Date().toLocaleTimeString("ko-KR");
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+async function drawWinner() {
+  if (!confirm("당첨자를 추첨할까요? 추첨 결과는 되돌릴 수 없습니다.")) {
+    return;
+  }
+
+  $("drawBtn").disabled = true;
+  $("drawStatus").textContent = "추첨 중...";
+  $("result").classList.add("hidden");
+
+  try {
+    const { data: userData } = await db.auth.getUser();
+
+    if (!userData.user || userData.user.id !== ADMIN_UID) {
+      throw new Error("관리자 로그인이 필요합니다.");
+    }
+
+    const { data, error } = await db.rpc("dokdo_draw_winner");
+
+    if (error) throw error;
+
+    if (!data || !data.length) {
+      throw new Error("추첨 결과가 없습니다.");
+    }
+
+    const info = data[0].student_info || "";
+    const space = info.indexOf(" ");
+    const studentId = space === -1 ? info : info.slice(0, space);
+    const studentName = space === -1 ? "" : info.slice(space + 1);
+
+    $("result").innerHTML =
+      "🎉 당첨자 발표 🎉<br><br>" +
+      escapeHTML(studentId) + " " + escapeHTML(studentName);
+
+    $("result").classList.remove("hidden");
+    $("drawStatus").textContent = "추첨이 완료되었습니다.";
+
+    await loadEntries();
+
+  } catch (error) {
+    $("drawStatus").textContent = "추첨 실패: " + error.message;
+  } finally {
+    $("drawBtn").disabled = false;
+  }
+}
+
+db.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT") showLogin();
+});
+
+checkSession();
+</script>
+
+</body>
+</html>
