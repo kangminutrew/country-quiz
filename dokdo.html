@@ -3,372 +3,313 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>독도 삼행시</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f1f5f9;
-  color: #173451;
+*{box-sizing:border-box}
+body{margin:0;background:#f3f6f9;color:#183653;font-family:Arial,sans-serif}
+.hero{
+ min-height:350px;
+ display:flex;align-items:center;justify-content:center;text-align:center;
+ color:white;
+ background-image:linear-gradient(90deg,rgba(4,24,45,.55),rgba(4,24,45,.55)),
+ url("https://commons.wikimedia.org/wiki/Special:FilePath/Dokdo_Island.jpg");
+ background-position:center 48%;background-size:cover;
 }
-header {
-  background: linear-gradient(135deg,#102d50,#17618b);
-  color: white;
-  text-align: center;
-  padding: 32px 16px 38px;
-}
-.flag { font-size: 35px; }
-header h1 { font-size: 36px; margin: 12px 0; }
-header p { margin: 0; color: #d9eaf6; }
-.container {
-  width: min(650px,92%);
-  margin: 24px auto;
-}
-.panel {
-  background: white;
-  padding: 24px;
-  border-radius: 18px;
-  margin-bottom: 18px;
-  box-shadow: 0 5px 20px #17345112;
-}
-h2 { margin-top: 0; color: #173451; }
-input {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  font-size: 16px;
-  margin: 8px 0;
-}
-button {
-  width: 100%;
-  border: 0;
-  padding: 14px;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 10px;
-}
-.primary { background: #173f67; color: white; }
-.secondary { background: #e7edf4; color: #173451; }
-.red { background: #c73545; color: white; }
-button:disabled { opacity: .5; cursor: not-allowed; }
-.message { margin-top: 12px; font-size: 14px; }
-.success { color: #16834a; }
-.error { color: #c73545; }
-.admin-panel { display: none; }
-.result {
-  background: #f0f5fa;
-  border: 2px solid #d6e3ef;
-  padding: 24px 12px;
-  border-radius: 16px;
-  text-align: center;
-  margin-top: 18px;
-}
-.result-name {
-  font-size: 30px;
-  font-weight: bold;
-  color: #173f67;
-  margin: 12px 0;
-  overflow-wrap: anywhere;
-}
-.ball-area {
-  display: flex;
-  justify-content: center;
-  gap: 9px;
-  min-height: 72px;
-  align-items: center;
-  margin: 14px 0;
-}
-.ball {
-  width: 43px;
-  height: 43px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: radial-gradient(circle at 30% 25%,white,#c8e1f5 60%,#6e9dc4);
-  color: #173f67;
-  font-weight: bold;
-  box-shadow: 0 3px 7px #0002;
-}
-.mixing .ball { animation: bounce .35s infinite alternate; }
-.mixing .ball:nth-child(2) { animation-delay: .12s; }
-.mixing .ball:nth-child(3) { animation-delay: .24s; }
-@keyframes bounce {
-  from { transform: translateY(0) rotate(0); }
-  to { transform: translateY(-22px) rotate(30deg); }
-}
-.small { font-size: 13px; color: #64748b; line-height: 1.6; }
-footer { text-align: center; padding: 20px; color: #64748b; font-size: 12px; }
+.hero-content{padding:45px 16px}
+.flag{font-size:34px}
+.eyebrow{font-size:11px;letter-spacing:4px;margin-top:12px}
+h1{font-size:43px;margin:15px 0;text-shadow:0 3px 12px #0008}
+.gold-line{height:3px;width:55px;background:#e6c36b;margin:18px auto}
+.hero p{line-height:1.8;font-size:15px;margin:0}
+.container{width:min(620px,92%);margin:25px auto}
+.panel{background:white;padding:23px;border-radius:18px;margin-bottom:18px;box-shadow:0 5px 22px #17345112}
+h2{margin:0 0 12px;font-size:21px}
+.small{font-size:13px;color:#718096;line-height:1.7}
+label{display:block;font-size:14px;font-weight:bold;margin:14px 0 5px}
+input{width:100%;padding:14px;border:1px solid #d2dce6;border-radius:10px;font-size:16px}
+button{width:100%;padding:14px;border:0;border-radius:10px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:12px}
+button:disabled{opacity:.5;cursor:wait}
+.primary{background:#173f67;color:white}
+.secondary{background:#eaf0f5;color:#173f67}
+.red{background:#b83b49;color:white}
+.message{font-size:14px;margin-top:12px;line-height:1.6;overflow-wrap:anywhere}
+.success{color:#16834a}
+.error{color:#c73545}
+.admin-box{display:none;margin-top:15px}
+.ball-area{height:100px;display:flex;justify-content:center;align-items:center;gap:14px}
+.ball{width:53px;height:53px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+ background:radial-gradient(circle at 30% 25%,#fff,#d5e9f8 60%,#7ca8cf);
+ color:#173f67;font-size:17px;font-weight:bold;box-shadow:0 4px 10px #0002}
+.mixing .ball{animation:mix .35s infinite alternate}
+.mixing .ball:nth-child(2){animation-delay:.12s}
+.mixing .ball:nth-child(3){animation-delay:.24s}
+@keyframes mix{to{transform:translateY(-23px) rotate(35deg)}}
+.result{background:#f2f6fa;border:1px solid #dce6ef;border-radius:14px;padding:22px 12px;text-align:center;margin-top:15px}
+.winner{font-size:28px;font-weight:bold;overflow-wrap:anywhere;margin:12px 0;color:#173f67}
+footer{text-align:center;color:#8492a2;font-size:12px;padding:18px;line-height:1.8}
+footer a{color:#8492a2}
+@media(max-width:480px){.hero{min-height:290px}h1{font-size:35px}.panel{padding:19px}}
 </style>
 </head>
 <body>
 
-<header>
+<header class="hero">
+ <div class="hero-content">
   <div class="flag">🇰🇷</div>
+  <div class="eyebrow">OUR BEAUTIFUL ISLAND</div>
   <h1>독도 삼행시</h1>
-  <p>독도를 향한 마음을 담아, 행운의 주인공을 만나 보세요!</p>
+  <div class="gold-line"></div>
+  <p>독도를 향한 마음을 담아,<br>행운의 주인공을 만나 보세요!</p>
+ </div>
 </header>
 
 <main class="container">
 
-  <section class="panel">
+ <section class="panel">
   <h2>✍️ 참가자 등록</h2>
   <p class="small">학번과 이름을 각각 입력해 주세요.</p>
 
-  <input id="studentId" type="text"
-    placeholder="학번 입력" maxlength="20">
+  <label for="studentId">학번</label>
+  <input id="studentId" type="text" maxlength="20" placeholder="학번 입력">
 
-  <input id="studentName" type="text"
-    placeholder="이름 입력" maxlength="30">
+  <label for="studentName">이름</label>
+  <input id="studentName" type="text" maxlength="30" placeholder="이름 입력">
 
-  <button class="primary" id="registerBtn"
-    onclick="registerParticipant()">참가 등록하기</button>
+  <button class="primary" id="registerBtn" onclick="registerParticipant()">참가 등록하기</button>
+  <div id="registerMessage" class="message" aria-live="polite"></div>
+ </section>
 
-  <div id="registerMessage" class="message"></div>
-</section>
+ <section class="panel">
+  <h2>🎱 행운의 추첨</h2>
+  <p class="small">관리자 인증 후 무작위 추첨을 진행할 수 있습니다.</p>
 
-  <section class="panel">
-    <h2>🎱 행운의 추첨</h2>
-    <p class="small">관리자만 추첨할 수 있습니다.</p>
+  <div class="ball-area" id="ballArea">
+   <div class="ball">독</div>
+   <div class="ball">도</div>
+   <div class="ball">!</div>
+  </div>
 
-    <div id="ballArea" class="ball-area">
-      <div class="ball">독</div>
-      <div class="ball">도</div>
-      <div class="ball">!</div>
-    </div>
+  <button class="secondary" id="loginOpenBtn" onclick="showLogin()">관리자 로그인</button>
 
-    <button class="secondary" id="loginOpenBtn"
-      onclick="showAdminLogin()">관리자 로그인</button>
+  <div class="admin-box" id="loginBox">
+   <label for="adminEmail">관리자 이메일</label>
+   <input id="adminEmail" type="email" autocomplete="username" placeholder="관리자 이메일">
 
-    <div id="adminLogin" class="admin-panel">
-      <input id="adminEmail" type="email"
-        placeholder="관리자 이메일">
-      <input id="adminPassword" type="password"
-        placeholder="관리자 비밀번호">
-      <button class="primary" onclick="adminLogin()">로그인</button>
-      <button class="secondary" onclick="hideAdminLogin()">취소</button>
-      <div id="loginMessage" class="message"></div>
-    </div>
+   <label for="adminPassword">관리자 비밀번호</label>
+   <input id="adminPassword" type="password" autocomplete="current-password" placeholder="관리자 비밀번호">
 
-    <div id="adminControls" class="admin-panel">
-      <p class="success">관리자 인증 완료</p>
-      <button class="primary" id="drawBtn"
-        onclick="drawWinner()">🎯 무작위 추첨하기</button>
-      <button class="secondary" onclick="adminLogout()">로그아웃</button>
-    </div>
+   <button class="primary" id="loginBtn" onclick="adminLogin()">로그인</button>
+   <button class="secondary" onclick="hideLogin()">취소</button>
+   <div id="loginMessage" class="message" aria-live="polite"></div>
+  </div>
 
-    <div class="result">
-      <div>🏆 추첨 결과</div>
-      <div class="result-name" id="winnerName">아직 추첨 전입니다</div>
-      <div id="drawMessage" class="small">
-        추첨 결과가 여기에 표시됩니다.
-      </div>
-    </div>
-  </section>
+  <div class="admin-box" id="adminControls">
+   <p class="success">✓ 관리자 인증 완료</p>
+   <button class="primary" id="drawBtn" onclick="drawWinner()">🎯 무작위 추첨하기</button>
+   <button class="secondary" onclick="adminLogout()">로그아웃</button>
+  </div>
 
-  <section class="panel">
-    <h2>🌊 독도 삼행시 이벤트</h2>
-    <p class="small">
-      참가자 등록은 누구나 할 수 있습니다.<br>
-      공정한 추첨을 위해 추첨 권한은 관리자에게만 있습니다.
-    </p>
-  </section>
+  <div class="result">
+   <div>🏆 추첨 결과</div>
+   <div class="winner" id="winnerName">아직 추첨 전입니다</div>
+   <div class="small" id="drawMessage">추첨 결과가 여기에 표시됩니다.</div>
+  </div>
+ </section>
+
+ <section class="panel">
+  <h2>🌊 독도 삼행시 이벤트</h2>
+  <p class="small">
+   참가자 등록은 누구나 할 수 있습니다.<br>
+   공정한 추첨을 위해 추첨 권한은 관리자에게만 있습니다.
+  </p>
+ </section>
 
 </main>
 
-<footer>아름다운 우리 섬, 독도 🇰🇷</footer>
+<footer>
+ 아름다운 우리 섬, 독도 🇰🇷<br>
+ 사진: <a href="https://commons.wikimedia.org/wiki/File:Dokdo_Island.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>
+</footer>
 
 <script>
+"use strict";
+
+// 기존 Supabase 프로젝트 정보
 const SUPABASE_URL = "https://grjysehvlabnyenorkfp.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L-X2UFs2cCARxgd14Fw2IQ_4MAEePxJ";
-
 const ADMIN_UID = "3b8ad1c7-6487-462a-984a-0788b88747cd";
 
-const db = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let isAdmin = false;
+let isDrawing = false;
 
-function showMessage(id, message, type) {
-  const el = document.getElementById(id);
-  el.textContent = message;
-  el.className = "message " + (type || "");
+function message(id, text, type) {
+ const el = document.getElementById(id);
+ el.textContent = text;
+ el.className = "message " + (type || "");
+}
+
+function showLogin() {
+ document.getElementById("loginBox").style.display = "block";
+ document.getElementById("loginOpenBtn").style.display = "none";
+}
+
+function hideLogin() {
+ document.getElementById("loginBox").style.display = "none";
+ document.getElementById("loginOpenBtn").style.display = "block";
+}
+
+function updateAdminView() {
+ document.getElementById("loginBox").style.display = "none";
+ document.getElementById("loginOpenBtn").style.display = isAdmin ? "none" : "block";
+ document.getElementById("adminControls").style.display = isAdmin ? "block" : "none";
 }
 
 async function registerParticipant() {
-  const input = document.getElementById("studentInfo");
-  const button = document.getElementById("registerBtn");
-  const info = input.value.trim();
+ const studentId = document.getElementById("studentId").value.trim();
+ const studentName = document.getElementById("studentName").value.trim();
+ const btn = document.getElementById("registerBtn");
 
-  if (info.length < 2) {
-    showMessage("registerMessage",
-      "학번과 이름을 입력해 주세요.", "error");
-    return;
-  }
+ if (!studentId || !studentName) {
+  message("registerMessage", "학번과 이름을 모두 입력해 주세요.", "error");
+  return;
+ }
 
-  button.disabled = true;
-  showMessage("registerMessage", "등록 중...", "");
+ if (studentId.length > 20 || studentName.length > 30) {
+  message("registerMessage", "학번 또는 이름이 너무 깁니다.", "error");
+  return;
+ }
 
+ btn.disabled = true;
+ message("registerMessage", "등록 중입니다...", "");
 
-async function registerParticipant() {
-  const studentId = document.getElementById("studentId").value.trim();
-  const studentName = document.getElementById("studentName").value.trim();
-  const button = document.getElementById("registerBtn");
+ try {
+  const { error } = await db
+   .from("dokdo_entries")
+   .insert({ student_info: studentId + " " + studentName });
 
-  if (!studentId || !studentName) {
-    showMessage("registerMessage", "학번과 이름을 모두 입력해 주세요.", "error");
-    return;
-  }
+  if (error) throw error;
 
-  button.disabled = true;
-  showMessage("registerMessage", "등록 중...", "");
+  document.getElementById("studentId").value = "";
+  document.getElementById("studentName").value = "";
+  message("registerMessage", "참가 등록이 완료되었습니다! 🎉", "success");
 
-  try {
-    const { error } = await db
-      .from("dokdo_entries")
-      .insert({
-        student_info: studentId + " " + studentName
-      });
-
-    if (error) throw error;
-
-    document.getElementById("studentId").value = "";
-    document.getElementById("studentName").value = "";
-
-    showMessage("registerMessage", "참가 등록이 완료되었습니다! 🎉", "success");
-  } catch (error) {
-    showMessage("registerMessage", "등록 실패: " + error.message, "error");
-  } finally {
-    button.disabled = false;
-  }
-}
-
-function showAdminLogin() {
-  document.getElementById("adminLogin").style.display = "block";
-  document.getElementById("loginOpenBtn").style.display = "none";
-}
-
-function hideAdminLogin() {
-  document.getElementById("adminLogin").style.display = "none";
-  document.getElementById("loginOpenBtn").style.display = "block";
-}
-
-function updateAdminScreen() {
-  document.getElementById("adminLogin").style.display = "none";
-  document.getElementById("loginOpenBtn").style.display =
-    isAdmin ? "none" : "block";
-  document.getElementById("adminControls").style.display =
-    isAdmin ? "block" : "none";
+ } catch (err) {
+  message("registerMessage", "등록 실패: " + err.message, "error");
+ } finally {
+  btn.disabled = false;
+ }
 }
 
 async function adminLogin() {
-  const email = document.getElementById("adminEmail").value.trim();
-  const password = document.getElementById("adminPassword").value;
+ const email = document.getElementById("adminEmail").value.trim();
+ const password = document.getElementById("adminPassword").value;
+ const btn = document.getElementById("loginBtn");
 
-  showMessage("loginMessage", "로그인 중...", "");
+ if (!email || !password) {
+  message("loginMessage", "이메일과 비밀번호를 입력해 주세요.", "error");
+  return;
+ }
 
-  const { data, error } = await db.auth.signInWithPassword({
-    email,
-    password
-  });
+ btn.disabled = true;
+ message("loginMessage", "로그인 중...", "");
 
-  if (error) {
-    showMessage("loginMessage",
-      "로그인 실패: " + error.message, "error");
-    return;
-  }
+ try {
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
+  if (error) throw error;
 
-  if (data.user.id !== ADMIN_UID) {
-    await db.auth.signOut();
-    showMessage("loginMessage",
-      "추첨 권한이 없는 계정입니다.", "error");
-    return;
+  if (!data.user || data.user.id !== ADMIN_UID) {
+   await db.auth.signOut();
+   throw new Error("이 계정에는 추첨 권한이 없습니다.");
   }
 
   isAdmin = true;
   document.getElementById("adminPassword").value = "";
-  updateAdminScreen();
+  updateAdminView();
+
+ } catch (err) {
+  message("loginMessage", "로그인 실패: " + err.message, "error");
+ } finally {
+  btn.disabled = false;
+ }
 }
 
 async function adminLogout() {
-  await db.auth.signOut();
-  isAdmin = false;
-  updateAdminScreen();
-  showMessage("drawMessage", "로그아웃되었습니다.", "");
+ await db.auth.signOut();
+ isAdmin = false;
+ updateAdminView();
+ message("drawMessage", "로그아웃되었습니다.", "");
 }
 
-async function checkAdminSession() {
-  const { data } = await db.auth.getSession();
-  const user = data.session?.user;
+async function checkSession() {
+ const { data, error } = await db.auth.getSession();
 
-  isAdmin = !!user && user.id === ADMIN_UID;
+ if (error) {
+  isAdmin = false;
+  updateAdminView();
+  return;
+ }
 
-  if (user && !isAdmin) {
-    await db.auth.signOut();
-  }
+ const user = data.session ? data.session.user : null;
+ isAdmin = !!user && user.id === ADMIN_UID;
 
-  updateAdminScreen();
+ if (user && !isAdmin) {
+  await db.auth.signOut();
+ }
+
+ updateAdminView();
 }
 
 async function drawWinner() {
-  if (!isAdmin) {
-    alert("관리자 로그인이 필요합니다.");
-    return;
-  }
+ if (!isAdmin || isDrawing) {
+  message("drawMessage", "관리자 로그인 후 이용해 주세요.", "error");
+  return;
+ }
 
-  const button = document.getElementById("drawBtn");
-  const area = document.getElementById("ballArea");
-  const winner = document.getElementById("winnerName");
+ isDrawing = true;
+ const btn = document.getElementById("drawBtn");
+ const area = document.getElementById("ballArea");
 
-  button.disabled = true;
-  winner.textContent = "추첨 중...";
-  document.getElementById("drawMessage").textContent =
-    "행운의 주인공을 뽑고 있습니다!";
+ btn.disabled = true;
+ document.getElementById("winnerName").textContent = "추첨 중...";
+ message("drawMessage", "공을 섞고 있습니다. 잠시만 기다려 주세요.", "");
+ area.classList.add("mixing");
 
-  area.classList.add("mixing");
-
-  await new Promise(resolve => setTimeout(resolve, 2200));
+ try {
+  await new Promise(resolve => setTimeout(resolve, 1800));
 
   const { data, error } = await db.rpc("dokdo_draw_winner");
 
-  area.classList.remove("mixing");
-  button.disabled = false;
-
-  if (error) {
-    winner.textContent = "추첨 실패";
-    document.getElementById("drawMessage").textContent =
-      error.message.includes("참가자가 없습니다")
-      ? "아직 추첨할 참가자가 없습니다."
-      : "오류: " + error.message;
-    return;
-  }
-
+  if (error) throw error;
   if (!data || data.length === 0) {
-    winner.textContent = "당첨자 없음";
-    return;
+   throw new Error("추첨할 참가자가 없습니다.");
   }
 
-  winner.textContent = data[0].student_info;
-  document.getElementById("drawMessage").textContent =
-    "축하합니다! 🎉 당첨되었습니다!";
+  document.getElementById("winnerName").textContent = data[0].student_info;
+  message("drawMessage", "축하합니다! 🎉 당첨되었습니다.", "success");
   area.innerHTML = '<div class="ball">🎉</div>';
+
+ } catch (err) {
+  document.getElementById("winnerName").textContent = "추첨 결과 없음";
+  message("drawMessage", "추첨 실패: " + err.message, "error");
+ } finally {
+  area.classList.remove("mixing");
+  btn.disabled = false;
+  isDrawing = false;
+ }
 }
 
 db.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_OUT") {
-    isAdmin = false;
-    updateAdminScreen();
-  }
+ if (event === "SIGNED_OUT") {
+  isAdmin = false;
+  updateAdminView();
+ }
 });
 
-checkAdminSession();
+checkSession();
 </script>
 
 </body>
