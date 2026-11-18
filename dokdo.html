@@ -17,7 +17,6 @@ body{
  font-family:Arial,sans-serif;
 }
 
-/* 독도 사진 배경 */
 .hero{
  min-height:380px;
  display:flex;
@@ -34,10 +33,7 @@ body{
  background-repeat:no-repeat;
 }
 
-.hero-content{
- padding:45px 16px;
-}
-
+.hero-content{padding:45px 16px}
 .flag{font-size:34px}
 
 .eyebrow{
@@ -120,20 +116,9 @@ button:disabled{
  cursor:wait;
 }
 
-.primary{
- background:#173f67;
- color:white;
-}
-
-.secondary{
- background:#eaf0f5;
- color:#173f67;
-}
-
-.red{
- background:#b83b49;
- color:white;
-}
+.primary{background:#173f67;color:white}
+.secondary{background:#eaf0f5;color:#173f67}
+.red{background:#b83b49;color:white}
 
 .message{
  font-size:14px;
@@ -150,9 +135,9 @@ button:disabled{
  margin-top:15px;
 }
 
-/* 로또 추첨기 */
+/* 추첨기 전체 */
 .ball-area{
- height:190px;
+ height:205px;
  display:flex;
  justify-content:center;
  align-items:center;
@@ -162,13 +147,14 @@ button:disabled{
 
 .lotto-machine{
  width:210px;
- height:175px;
+ height:185px;
  position:relative;
  display:flex;
  justify-content:center;
  align-items:flex-start;
 }
 
+/* 투명한 원형 추첨 통 */
 .drum{
  width:142px;
  height:142px;
@@ -182,11 +168,12 @@ button:disabled{
  box-shadow:
  inset 0 0 18px #ffffff,
  0 5px 12px #17345135;
- animation:lottoIdle 12s linear infinite;
  transform-origin:center;
+ animation:idleSpin 16s linear infinite;
+ overflow:hidden;
 }
 
-/* 추첨기 내부의 회전 축 */
+/* 가운데 축 */
 .drum::before{
  content:"";
  position:absolute;
@@ -197,45 +184,40 @@ button:disabled{
  left:50%;
  top:50%;
  transform:translate(-50%,-50%);
- z-index:3;
+ z-index:5;
  box-shadow:0 0 0 5px #ffffff88;
+ pointer-events:none;
 }
 
-/* 원형 통 내부의 선 */
-.drum::after{
- content:"";
- position:absolute;
- inset:12px 32px;
- border-left:3px solid #ffffffa8;
- border-right:3px solid #ffffffa8;
- border-radius:50%;
- transform:rotate(35deg);
-}
-
+/* 통 안의 공 */
 .lotto-ball{
  position:absolute;
- width:27px;
- height:27px;
+ width:26px;
+ height:26px;
+ left:0;
+ top:0;
  border-radius:50%;
  display:flex;
  align-items:center;
  justify-content:center;
- font-size:11px;
+ font-size:10px;
  font-weight:bold;
  color:#173f67;
  background:radial-gradient(circle at 30% 25%,#fff,#e5f2fc 55%,#9fc3e2);
  box-shadow:0 2px 5px #17345145;
- z-index:2;
+ z-index:3;
+ will-change:left,top,transform;
 }
 
-.lotto-ball:nth-child(1){left:20px;top:25px}
-.lotto-ball:nth-child(2){left:72px;top:16px}
-.lotto-ball:nth-child(3){left:96px;top:55px}
-.lotto-ball:nth-child(4){left:55px;top:83px}
-.lotto-ball:nth-child(5){left:17px;top:75px}
-.lotto-ball:nth-child(6){left:85px;top:105px}
+/* 공 색상 */
+.lotto-ball:nth-child(2){background:radial-gradient(circle at 30% 25%,#fff,#ffe8a5 55%,#e9b83d)}
+.lotto-ball:nth-child(3){background:radial-gradient(circle at 30% 25%,#fff,#ffc6c6 55%,#e87878)}
+.lotto-ball:nth-child(4){background:radial-gradient(circle at 30% 25%,#fff,#c9f0d5 55%,#65b985)}
+.lotto-ball:nth-child(5){background:radial-gradient(circle at 30% 25%,#fff,#e2d2ff 55%,#9a7bd0)}
+.lotto-ball:nth-child(6){background:radial-gradient(circle at 30% 25%,#fff,#c9e9ff 55%,#65a9d5)}
+.lotto-ball:nth-child(7){background:radial-gradient(circle at 30% 25%,#fff,#ffd9b5 55%,#e89b55)}
 
-/* 추첨기 아래쪽 연결 부분 */
+/* 아래쪽 받침 */
 .machine-neck{
  position:absolute;
  width:48px;
@@ -245,7 +227,7 @@ button:disabled{
  background:linear-gradient(90deg,#7399b6,#d7e8f4,#7399b6);
  border:2px solid #6e91ae;
  border-radius:5px 5px 0 0;
- z-index:-1;
+ z-index:0;
 }
 
 .machine-base{
@@ -258,37 +240,23 @@ button:disabled{
  border:2px solid #6489a8;
  border-radius:9px 9px 13px 13px;
  box-shadow:0 5px 8px #17345125;
+ z-index:1;
 }
 
-/* 평상시 천천히 회전 */
-@keyframes lottoIdle{
+/* 평소 천천히 회전 */
+@keyframes idleSpin{
  from{transform:rotate(0deg)}
  to{transform:rotate(360deg)}
 }
 
-/* 추첨할 때 빠르게 회전 */
+/* 추첨 중 빠른 회전 */
 .ball-area.mixing .drum{
- animation:lottoSpin .45s linear infinite;
+ animation:fastSpin .45s linear infinite;
 }
 
-.ball-area.mixing .lotto-ball{
- animation:ballBounce .3s ease-in-out infinite alternate;
-}
-
-.ball-area.mixing .lotto-ball:nth-child(2){animation-delay:.08s}
-.ball-area.mixing .lotto-ball:nth-child(3){animation-delay:.16s}
-.ball-area.mixing .lotto-ball:nth-child(4){animation-delay:.04s}
-.ball-area.mixing .lotto-ball:nth-child(5){animation-delay:.12s}
-.ball-area.mixing .lotto-ball:nth-child(6){animation-delay:.2s}
-
-@keyframes lottoSpin{
+@keyframes fastSpin{
  from{transform:rotate(0deg)}
  to{transform:rotate(360deg)}
-}
-
-@keyframes ballBounce{
- from{translate:0 0}
- to{translate:0 -12px}
 }
 
 .result{
@@ -316,9 +284,7 @@ footer{
  line-height:1.8;
 }
 
-footer a{
- color:#8492a2;
-}
+footer a{color:#8492a2}
 
 @media(max-width:480px){
  .hero{min-height:300px}
@@ -366,10 +332,9 @@ footer a{
   <h2>🎱 행운의 추첨</h2>
   <p class="small">관리자 인증 후 무작위 추첨을 진행할 수 있습니다.</p>
 
-  <!-- 로또 추첨기 -->
   <div class="ball-area" id="ballArea">
    <div class="lotto-machine">
-    <div class="drum">
+    <div class="drum" id="drum">
      <div class="lotto-ball">7</div>
      <div class="lotto-ball">12</div>
      <div class="lotto-ball">19</div>
@@ -451,6 +416,139 @@ const db = window.supabase.createClient(
 
 let isAdmin = false;
 let isDrawing = false;
+
+/* 공의 움직임을 계산하는 물리 효과 */
+const drum = document.getElementById("drum");
+const ballElements = [...document.querySelectorAll(".lotto-ball")];
+
+const CENTER = 64;
+const BALL_RADIUS = 11;
+const WALL_RADIUS = 55;
+
+const balls = ballElements.map((element,i)=>{
+ const angle = (Math.PI*2*i)/ballElements.length;
+ const distance = 22 + (i%3)*12;
+
+ return {
+  element,
+  x:CENTER + Math.cos(angle)*distance,
+  y:CENTER + Math.sin(angle)*distance,
+  vx:Math.sin(i*4+1)*0.5,
+  vy:Math.cos(i*3+2)*0.5,
+  rotation:0
+ };
+});
+
+function animateBalls(){
+ const mixing = isDrawing;
+
+ balls.forEach((ball,i)=>{
+  // 중력
+  ball.vy += mixing ? 0.075 : 0.035;
+
+  // 공이 굴러다니도록 작은 힘을 계속 가함
+  const movement = mixing ? 0.8 : 0.10;
+
+  ball.vx += Math.sin(Date.now()/350+i*3)*movement*0.035;
+  ball.vy += Math.cos(Date.now()/400+i*2)*movement*0.025;
+
+  // 추첨 중에는 불규칙하게 튀는 힘 추가
+  if(mixing){
+   ball.vx += (Math.random()-0.5)*0.24;
+   ball.vy += (Math.random()-0.5)*0.24;
+  }
+
+  // 속도 제한
+  const maxSpeed = mixing ? 4.5 : 1.4;
+  const speed = Math.hypot(ball.vx,ball.vy);
+
+  if(speed>maxSpeed){
+   ball.vx = ball.vx/speed*maxSpeed;
+   ball.vy = ball.vy/speed*maxSpeed;
+  }
+
+  // 위치 이동
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  // 원형 통 벽과 충돌
+  const dx = ball.x-CENTER;
+  const dy = ball.y-CENTER;
+  const distance = Math.hypot(dx,dy);
+  const limit = WALL_RADIUS-BALL_RADIUS;
+
+  if(distance>limit){
+   const nx = dx/distance;
+   const ny = dy/distance;
+
+   ball.x = CENTER+nx*limit;
+   ball.y = CENTER+ny*limit;
+
+   const dot = ball.vx*nx+ball.vy*ny;
+
+   ball.vx -= 1.85*dot*nx;
+   ball.vy -= 1.85*dot*ny;
+
+   // 벽에 닿을 때 마찰
+   ball.vx *= 0.94;
+   ball.vy *= 0.94;
+  }
+ });
+
+ // 공끼리 부딪히는 효과
+ for(let i=0;i<balls.length;i++){
+  for(let j=i+1;j<balls.length;j++){
+   const a=balls[i];
+   const b=balls[j];
+
+   let dx=b.x-a.x;
+   let dy=b.y-a.y;
+   let distance=Math.hypot(dx,dy);
+
+   const minDistance=BALL_RADIUS*2;
+
+   if(distance===0){
+    dx=0.1;
+    distance=0.1;
+   }
+
+   if(distance<minDistance){
+    const nx=dx/distance;
+    const ny=dy/distance;
+    const overlap=minDistance-distance;
+
+    a.x-=nx*overlap/2;
+    a.y-=ny*overlap/2;
+    b.x+=nx*overlap/2;
+    b.y+=ny*overlap/2;
+
+    const relativeVelocity=
+     (b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+
+    if(relativeVelocity<0){
+     const impulse=relativeVelocity*0.88;
+     a.vx+=impulse*nx;
+     a.vy+=impulse*ny;
+     b.vx-=impulse*nx;
+     b.vy-=impulse*ny;
+    }
+   }
+  }
+ }
+
+ // 공 위치와 회전 적용
+ balls.forEach(ball=>{
+  ball.rotation += Math.hypot(ball.vx,ball.vy)*2.5;
+
+  ball.element.style.left=(ball.x-BALL_RADIUS)+"px";
+  ball.element.style.top=(ball.y-BALL_RADIUS)+"px";
+  ball.element.style.transform=`rotate(${ball.rotation}deg)`;
+ });
+
+ requestAnimationFrame(animateBalls);
+}
+
+animateBalls();
 
 function message(id,text,type){
  const el=document.getElementById(id);
@@ -591,7 +689,7 @@ async function drawWinner(){
  area.classList.add("mixing");
 
  try{
-  await new Promise(resolve=>setTimeout(resolve,1800));
+  await new Promise(resolve=>setTimeout(resolve,3000));
 
   const {data,error}=await db.rpc("dokdo_draw_winner");
 
@@ -603,8 +701,6 @@ async function drawWinner(){
 
   document.getElementById("winnerName").textContent=data[0].student_info;
   message("drawMessage","축하합니다! 🎉 당첨되었습니다.","success");
-
-  // 추첨기가 사라지지 않도록 기존 그림을 유지합니다.
 
  }catch(err){
   document.getElementById("winnerName").textContent="추첨 결과 없음";
