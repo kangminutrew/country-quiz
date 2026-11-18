@@ -1,0 +1,353 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>독도 삼행시</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  color: #173451;
+}
+header {
+  background: linear-gradient(135deg,#102d50,#17618b);
+  color: white;
+  text-align: center;
+  padding: 32px 16px 38px;
+}
+.flag { font-size: 35px; }
+header h1 { font-size: 36px; margin: 12px 0; }
+header p { margin: 0; color: #d9eaf6; }
+.container {
+  width: min(650px,92%);
+  margin: 24px auto;
+}
+.panel {
+  background: white;
+  padding: 24px;
+  border-radius: 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 5px 20px #17345112;
+}
+h2 { margin-top: 0; color: #173451; }
+input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 16px;
+  margin: 8px 0;
+}
+button {
+  width: 100%;
+  border: 0;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.primary { background: #173f67; color: white; }
+.secondary { background: #e7edf4; color: #173451; }
+.red { background: #c73545; color: white; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.message { margin-top: 12px; font-size: 14px; }
+.success { color: #16834a; }
+.error { color: #c73545; }
+.admin-panel { display: none; }
+.result {
+  background: #f0f5fa;
+  border: 2px solid #d6e3ef;
+  padding: 24px 12px;
+  border-radius: 16px;
+  text-align: center;
+  margin-top: 18px;
+}
+.result-name {
+  font-size: 30px;
+  font-weight: bold;
+  color: #173f67;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.ball-area {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  min-height: 72px;
+  align-items: center;
+  margin: 14px 0;
+}
+.ball {
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 30% 25%,white,#c8e1f5 60%,#6e9dc4);
+  color: #173f67;
+  font-weight: bold;
+  box-shadow: 0 3px 7px #0002;
+}
+.mixing .ball { animation: bounce .35s infinite alternate; }
+.mixing .ball:nth-child(2) { animation-delay: .12s; }
+.mixing .ball:nth-child(3) { animation-delay: .24s; }
+@keyframes bounce {
+  from { transform: translateY(0) rotate(0); }
+  to { transform: translateY(-22px) rotate(30deg); }
+}
+.small { font-size: 13px; color: #64748b; line-height: 1.6; }
+footer { text-align: center; padding: 20px; color: #64748b; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="flag">🇰🇷</div>
+  <h1>독도 삼행시</h1>
+  <p>독도를 향한 마음을 담아, 행운의 주인공을 만나 보세요!</p>
+</header>
+
+<main class="container">
+
+  <section class="panel">
+    <h2>✍️ 참가자 등록</h2>
+    <p class="small">학번과 이름을 함께 입력해 주세요.<br>예: 10101 홍길동</p>
+    <input id="studentInfo" type="text"
+      placeholder="학번 이름 입력"
+      maxlength="100">
+    <button class="primary" id="registerBtn"
+      onclick="registerParticipant()">참가 등록하기</button>
+    <div id="registerMessage" class="message"></div>
+  </section>
+
+  <section class="panel">
+    <h2>🎱 행운의 추첨</h2>
+    <p class="small">관리자만 추첨할 수 있습니다.</p>
+
+    <div id="ballArea" class="ball-area">
+      <div class="ball">독</div>
+      <div class="ball">도</div>
+      <div class="ball">!</div>
+    </div>
+
+    <button class="secondary" id="loginOpenBtn"
+      onclick="showAdminLogin()">관리자 로그인</button>
+
+    <div id="adminLogin" class="admin-panel">
+      <input id="adminEmail" type="email"
+        placeholder="관리자 이메일">
+      <input id="adminPassword" type="password"
+        placeholder="관리자 비밀번호">
+      <button class="primary" onclick="adminLogin()">로그인</button>
+      <button class="secondary" onclick="hideAdminLogin()">취소</button>
+      <div id="loginMessage" class="message"></div>
+    </div>
+
+    <div id="adminControls" class="admin-panel">
+      <p class="success">관리자 인증 완료</p>
+      <button class="primary" id="drawBtn"
+        onclick="drawWinner()">🎯 무작위 추첨하기</button>
+      <button class="secondary" onclick="adminLogout()">로그아웃</button>
+    </div>
+
+    <div class="result">
+      <div>🏆 추첨 결과</div>
+      <div class="result-name" id="winnerName">아직 추첨 전입니다</div>
+      <div id="drawMessage" class="small">
+        추첨 결과가 여기에 표시됩니다.
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>🌊 독도 삼행시 이벤트</h2>
+    <p class="small">
+      참가자 등록은 누구나 할 수 있습니다.<br>
+      공정한 추첨을 위해 추첨 권한은 관리자에게만 있습니다.
+    </p>
+  </section>
+
+</main>
+
+<footer>아름다운 우리 섬, 독도 🇰🇷</footer>
+
+<script>
+const SUPABASE_URL = "https://grjysehvlabnyenorkfp.supabase.co";
+const SUPABASE_KEY = "sb_publishable_L-X2UFs2cCARxgd14Fw2IQ_4MAEePxJ";
+
+const ADMIN_UID = "3b8ad1c7-6487-462a-984a-0788b88747cd";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+let isAdmin = false;
+
+function showMessage(id, message, type) {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.className = "message " + (type || "");
+}
+
+async function registerParticipant() {
+  const input = document.getElementById("studentInfo");
+  const button = document.getElementById("registerBtn");
+  const info = input.value.trim();
+
+  if (info.length < 2) {
+    showMessage("registerMessage",
+      "학번과 이름을 입력해 주세요.", "error");
+    return;
+  }
+
+  button.disabled = true;
+  showMessage("registerMessage", "등록 중...", "");
+
+  const { error } = await db
+    .from("dokdo_entries")
+    .insert({ student_info: info });
+
+  button.disabled = false;
+
+  if (error) {
+    showMessage("registerMessage",
+      "등록에 실패했습니다: " + error.message, "error");
+    return;
+  }
+
+  input.value = "";
+  showMessage("registerMessage",
+    "참가 등록이 완료되었습니다! 🎉", "success");
+}
+
+function showAdminLogin() {
+  document.getElementById("adminLogin").style.display = "block";
+  document.getElementById("loginOpenBtn").style.display = "none";
+}
+
+function hideAdminLogin() {
+  document.getElementById("adminLogin").style.display = "none";
+  document.getElementById("loginOpenBtn").style.display = "block";
+}
+
+function updateAdminScreen() {
+  document.getElementById("adminLogin").style.display = "none";
+  document.getElementById("loginOpenBtn").style.display =
+    isAdmin ? "none" : "block";
+  document.getElementById("adminControls").style.display =
+    isAdmin ? "block" : "none";
+}
+
+async function adminLogin() {
+  const email = document.getElementById("adminEmail").value.trim();
+  const password = document.getElementById("adminPassword").value;
+
+  showMessage("loginMessage", "로그인 중...", "");
+
+  const { data, error } = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    showMessage("loginMessage",
+      "로그인 실패: " + error.message, "error");
+    return;
+  }
+
+  if (data.user.id !== ADMIN_UID) {
+    await db.auth.signOut();
+    showMessage("loginMessage",
+      "추첨 권한이 없는 계정입니다.", "error");
+    return;
+  }
+
+  isAdmin = true;
+  document.getElementById("adminPassword").value = "";
+  updateAdminScreen();
+}
+
+async function adminLogout() {
+  await db.auth.signOut();
+  isAdmin = false;
+  updateAdminScreen();
+  showMessage("drawMessage", "로그아웃되었습니다.", "");
+}
+
+async function checkAdminSession() {
+  const { data } = await db.auth.getSession();
+  const user = data.session?.user;
+
+  isAdmin = !!user && user.id === ADMIN_UID;
+
+  if (user && !isAdmin) {
+    await db.auth.signOut();
+  }
+
+  updateAdminScreen();
+}
+
+async function drawWinner() {
+  if (!isAdmin) {
+    alert("관리자 로그인이 필요합니다.");
+    return;
+  }
+
+  const button = document.getElementById("drawBtn");
+  const area = document.getElementById("ballArea");
+  const winner = document.getElementById("winnerName");
+
+  button.disabled = true;
+  winner.textContent = "추첨 중...";
+  document.getElementById("drawMessage").textContent =
+    "행운의 주인공을 뽑고 있습니다!";
+
+  area.classList.add("mixing");
+
+  await new Promise(resolve => setTimeout(resolve, 2200));
+
+  const { data, error } = await db.rpc("dokdo_draw_winner");
+
+  area.classList.remove("mixing");
+  button.disabled = false;
+
+  if (error) {
+    winner.textContent = "추첨 실패";
+    document.getElementById("drawMessage").textContent =
+      error.message.includes("참가자가 없습니다")
+      ? "아직 추첨할 참가자가 없습니다."
+      : "오류: " + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    winner.textContent = "당첨자 없음";
+    return;
+  }
+
+  winner.textContent = data[0].student_info;
+  document.getElementById("drawMessage").textContent =
+    "축하합니다! 🎉 당첨되었습니다!";
+  area.innerHTML = '<div class="ball">🎉</div>';
+}
+
+db.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT") {
+    isAdmin = false;
+    updateAdminScreen();
+  }
+});
+
+checkAdminSession();
+</script>
+
+</body>
+</html>
