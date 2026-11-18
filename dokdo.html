@@ -420,8 +420,8 @@ function animateBalls(time){
  const mixing=isDrawing;
 
  // 통 회전 속도
- const angularSpeed=mixing ? 0.026 : 0.008;
- drumAngle+=angularSpeed*dt;
+const angularSpeed=mixing ? 0.039 : 0.026;
+drumAngle+=angularSpeed*dt;
 
  // 통 자체 회전
  drum.style.transform=`rotate(${drumAngle*180/Math.PI}deg)`;
