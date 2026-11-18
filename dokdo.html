@@ -117,15 +117,20 @@ footer { text-align: center; padding: 20px; color: #64748b; font-size: 12px; }
 <main class="container">
 
   <section class="panel">
-    <h2>✍️ 참가자 등록</h2>
-    <p class="small">학번과 이름을 함께 입력해 주세요.<br>예: 10101 홍길동</p>
-    <input id="studentInfo" type="text"
-      placeholder="학번 이름 입력"
-      maxlength="100">
-    <button class="primary" id="registerBtn"
-      onclick="registerParticipant()">참가 등록하기</button>
-    <div id="registerMessage" class="message"></div>
-  </section>
+  <h2>✍️ 참가자 등록</h2>
+  <p class="small">학번과 이름을 각각 입력해 주세요.</p>
+
+  <input id="studentId" type="text"
+    placeholder="학번 입력" maxlength="20">
+
+  <input id="studentName" type="text"
+    placeholder="이름 입력" maxlength="30">
+
+  <button class="primary" id="registerBtn"
+    onclick="registerParticipant()">참가 등록하기</button>
+
+  <div id="registerMessage" class="message"></div>
+</section>
 
   <section class="panel">
     <h2>🎱 행운의 추첨</h2>
@@ -211,23 +216,40 @@ async function registerParticipant() {
   button.disabled = true;
   showMessage("registerMessage", "등록 중...", "");
 
+ async function registerParticipant() {
+  const studentId = document.getElementById("studentId").value.trim();
+  const studentName = document.getElementById("studentName").value.trim();
+  const button = document.getElementById("registerBtn");
+
+  if (!studentId || !studentName) {
+    showMessage("registerMessage",
+      "학번과 이름을 모두 입력해 주세요.", "error");
+    return;
+  }
+
+  button.disabled = true;
+  showMessage("registerMessage", "등록 중...", "");
+
   const { error } = await db
     .from("dokdo_entries")
-    .insert({ student_info: info });
+    .insert({
+      student_info: studentId + " " + studentName
+    });
 
   button.disabled = false;
 
   if (error) {
     showMessage("registerMessage",
-      "등록에 실패했습니다: " + error.message, "error");
+      "등록 실패: " + error.message, "error");
     return;
   }
 
-  input.value = "";
+  document.getElementById("studentId").value = "";
+  document.getElementById("studentName").value = "";
+
   showMessage("registerMessage",
     "참가 등록이 완료되었습니다! 🎉", "success");
 }
-
 function showAdminLogin() {
   document.getElementById("adminLogin").style.display = "block";
   document.getElementById("loginOpenBtn").style.display = "none";
