@@ -1,0 +1,302 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>국가 찾기 게임 관리자</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f5f9;
+      margin: 0;
+      padding: 24px;
+      color: #222;
+    }
+    .container {
+      max-width: 1050px;
+      margin: auto;
+    }
+    h1 { margin-bottom: 8px; }
+    .panel {
+      background: white;
+      padding: 22px;
+      border-radius: 12px;
+      margin: 18px 0;
+      box-shadow: 0 2px 10px #00000010;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 3px;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+      background: #2457d6;
+      color: white;
+      border: none;
+    }
+    button.delete { background: #d93636; }
+    button.gray { background: #666; }
+    button:hover { opacity: .85; }
+    #dashboard { display: none; }
+    #message { margin: 10px 0; color: #2457d6; }
+    .table-wrap { overflow-x: auto; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+      min-width: 650px;
+    }
+    th, td {
+      border-bottom: 1px solid #ddd;
+      padding: 11px 8px;
+      text-align: left;
+    }
+    th { background: #eef2fa; }
+    .count { font-weight: bold; margin: 12px 0; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>국가 찾기 게임 관리자</h1>
+  <p>관리자 계정으로 로그인해 참가자 점수를 관리합니다.</p>
+
+  <div class="panel" id="loginPanel">
+    <h2>관리자 로그인</h2>
+    <input id="email" type="email" placeholder="관리자 이메일">
+    <br>
+    <input id="password" type="password" placeholder="비밀번호">
+    <br>
+    <button onclick="login()">로그인</button>
+    <div id="loginMessage"></div>
+  </div>
+
+  <div id="dashboard">
+    <div class="panel">
+      <h2>점수 관리</h2>
+      <button onclick="loadScores()">새로고침</button>
+      <button class="delete" onclick="deleteAll()">전체 기록 삭제</button>
+      <button class="gray" onclick="logout()">로그아웃</button>
+      <div id="message"></div>
+      <div class="count" id="count"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>학번</th>
+              <th>이름</th>
+              <th>난이도</th>
+              <th>점수</th>
+              <th>등록 시간</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="scoreList"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 아래 두 항목을 본인의 Supabase 정보로 바꿔 주세요.
+  const SUPABASE_URL = "https://grjysehvlabnyenorkfp.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_L-X2UFs2cCARxgd14Fw2IQ_4MAEePxJ";
+
+  const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  function showMessage(message) {
+    document.getElementById("message").textContent = message;
+  }
+
+  async function login() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const output = document.getElementById("loginMessage");
+
+    output.textContent = "로그인 확인 중...";
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      output.textContent = "로그인 실패: " + error.message;
+      return;
+    }
+
+    document.getElementById("loginPanel").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    await loadScores();
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("loginPanel").style.display = "block";
+    document.getElementById("password").value = "";
+  }
+
+  async function loadScores() {
+    showMessage("기록을 불러오는 중...");
+
+    const { data, error } = await db
+      .from("game_scores")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      showMessage("불러오기 실패: " + error.message);
+      return;
+    }
+
+    const list = document.getElementById("scoreList");
+    list.replaceChildren();
+
+    document.getElementById("count").textContent =
+      "전체 참가 기록: " + data.length + "개";
+
+    data.forEach(row => {
+      const tr = document.createElement("tr");
+
+      const values = [
+        row.student_id,
+        row.student_name,
+        row.difficulty,
+        row.score,
+        new Date(row.created_at).toLocaleString("ko-KR")
+      ];
+
+      values.forEach(value => {
+        const td = document.createElement("td");
+        td.textContent = value ?? "";
+        tr.appendChild(td);
+      });
+
+      const action = document.createElement("td");
+
+      const editButton = document.createElement("button");
+      editButton.textContent = "수정";
+      editButton.onclick = () => editScore(row);
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "삭제";
+      deleteButton.className = "delete";
+      deleteButton.onclick = () => deleteScore(row.id);
+
+      action.append(editButton, deleteButton);
+      tr.appendChild(action);
+      list.appendChild(tr);
+    });
+
+    showMessage("기록을 불러왔습니다.");
+  }
+
+  async function editScore(row) {
+    const studentId = prompt("학번을 입력하세요.", row.student_id);
+    if (studentId === null) return;
+
+    const studentName = prompt("이름을 입력하세요.", row.student_name);
+    if (studentName === null) return;
+
+    const difficulty = prompt("난이도: 하 / 중 / 상", row.difficulty);
+    if (difficulty === null) return;
+
+    const scoreText = prompt("점수 (0~90)", row.score);
+    if (scoreText === null) return;
+
+    const score = Number(scoreText);
+
+    if (!studentId.trim() || !studentName.trim()) {
+      alert("학번과 이름을 입력해 주세요.");
+      return;
+    }
+
+    if (!["하", "중", "상"].includes(difficulty)) {
+      alert("난이도는 하, 중, 상 중 하나여야 합니다.");
+      return;
+    }
+
+    if (!Number.isInteger(score) || score < 0 || score > 90) {
+      alert("점수는 0~90 사이의 정수여야 합니다.");
+      return;
+    }
+
+    const { error } = await db
+      .from("game_scores")
+      .update({
+        student_id: studentId.trim(),
+        student_name: studentName.trim(),
+        difficulty,
+        score
+      })
+      .eq("id", row.id);
+
+    if (error) {
+      alert("수정 실패: " + error.message);
+      return;
+    }
+
+    alert("수정되었습니다.");
+    await loadScores();
+  }
+
+  async function deleteScore(id) {
+    if (!confirm("이 참가 기록을 삭제할까요?")) return;
+
+    const { error } = await db
+      .from("game_scores")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert("삭제 실패: " + error.message);
+      return;
+    }
+
+    alert("삭제되었습니다.");
+    await loadScores();
+  }
+
+  async function deleteAll() {
+    if (!confirm("정말 모든 참가 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) {
+      return;
+    }
+
+    const { error } = await db
+      .from("game_scores")
+      .delete()
+      .gte("id", 0);
+
+    if (error) {
+      alert("전체 삭제 실패: " + error.message);
+      return;
+    }
+
+    alert("모든 기록이 삭제되었습니다.");
+    await loadScores();
+  }
+
+  // 페이지를 다시 열었을 때 기존 로그인 상태 확인
+  async function checkSession() {
+    const { data } = await db.auth.getSession();
+
+    if (data.session) {
+      document.getElementById("loginPanel").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      await loadScores();
+    }
+  }
+
+  checkSession();
+</script>
+</body>
+</html>
