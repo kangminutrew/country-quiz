@@ -23,7 +23,7 @@ header {
 header h1 { margin: 0 0 8px; }
 header p { margin: 0; opacity: .85; }
 .container {
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 25px auto;
   padding: 0 16px;
 }
@@ -46,18 +46,21 @@ input {
 button {
   border: 0;
   border-radius: 9px;
-  padding: 12px 18px;
+  padding: 11px 15px;
   background: #1769aa;
   color: white;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  margin: 4px;
+  margin: 3px;
 }
 button:hover { opacity: .88; }
 button:disabled { opacity: .5; cursor: not-allowed; }
 .logout { background: #66788a; }
 .draw { background: #d18a20; }
+.edit { background: #1769aa; }
+.delete { background: #d94848; }
+.cancel { background: #66788a; }
 .status { color: #526b82; margin-top: 12px; }
 .cards {
   display: grid;
@@ -79,7 +82,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 450px;
+  min-width: 650px;
 }
 th,td {
   padding: 13px 10px;
@@ -88,7 +91,7 @@ th,td {
 }
 th { background: #f3f7fb; }
 .winner { color: #c17b13; font-weight: bold; }
-.hidden { display: none; }
+.hidden { display: none !important; }
 #result {
   background: #fff7e8;
   border-radius: 12px;
@@ -97,6 +100,16 @@ th { background: #f3f7fb; }
   text-align: center;
   font-size: 19px;
   font-weight: bold;
+}
+.edit-panel {
+  border: 2px solid #d8e8f7;
+  background: #f8fbff;
+}
+.edit-panel h2 { margin-bottom: 8px; }
+.edit-panel label {
+  display: block;
+  font-weight: bold;
+  margin-top: 10px;
 }
 @media(max-width:600px) {
   .cards { grid-template-columns: 1fr; }
@@ -158,6 +171,21 @@ th { background: #f3f7fb; }
       <p class="status" id="drawStatus"></p>
     </div>
 
+    <div class="panel edit-panel hidden" id="editPanel">
+      <h2>✏️ 참가자 정보 수정</h2>
+      <p>수정할 학번과 이름을 입력하세요.</p>
+
+      <label for="editStudentId">학번</label>
+      <input id="editStudentId" placeholder="학번 입력">
+
+      <label for="editStudentName">이름</label>
+      <input id="editStudentName" placeholder="이름 입력">
+
+      <button id="saveEditBtn" onclick="saveEdit()">수정 내용 저장</button>
+      <button class="cancel" onclick="cancelEdit()">취소</button>
+      <p class="status" id="editStatus"></p>
+    </div>
+
     <div class="panel">
       <h2>👥 참가자 명단</h2>
       <div class="table-wrap">
@@ -169,10 +197,11 @@ th { background: #f3f7fb; }
               <th>이름</th>
               <th>상태</th>
               <th>등록 시간</th>
+              <th>관리</th>
             </tr>
           </thead>
           <tbody id="participantList">
-            <tr><td colspan="5">불러오는 중...</td></tr>
+            <tr><td colspan="6">불러오는 중...</td></tr>
           </tbody>
         </table>
       </div>
@@ -193,6 +222,7 @@ const db = window.supabase.createClient(
 );
 
 const $ = id => document.getElementById(id);
+let editingId = null;
 
 function showDashboard() {
   $("loginPanel").classList.add("hidden");
@@ -202,6 +232,7 @@ function showDashboard() {
 
 function showLogin() {
   $("dashboard").classList.add("hidden");
+  $("editPanel").classList.add("hidden");
   $("loginPanel").classList.remove("hidden");
 }
 
@@ -264,10 +295,30 @@ async function checkSession() {
   }
 }
 
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+function splitStudentInfo(info) {
+  const value = (info || "").trim();
+  const space = value.indexOf(" ");
+
+  return {
+    studentId: space === -1 ? value : value.slice(0, space),
+    studentName: space === -1 ? "" : value.slice(space + 1)
+  };
+}
+
 async function loadEntries() {
   $("listStatus").textContent = "참가자 정보를 불러오는 중...";
   $("participantList").innerHTML =
-    '<tr><td colspan="5">불러오는 중...</td></tr>';
+    '<tr><td colspan="6">불러오는 중...</td></tr>';
 
   const { data: userData } = await db.auth.getUser();
 
@@ -281,7 +332,7 @@ async function loadEntries() {
   if (error) {
     $("listStatus").textContent = "조회 실패: " + error.message;
     $("participantList").innerHTML =
-      '<tr><td colspan="5">정보를 불러오지 못했습니다.</td></tr>';
+      '<tr><td colspan="6">정보를 불러오지 못했습니다.</td></tr>';
     return;
   }
 
@@ -295,13 +346,10 @@ async function loadEntries() {
 
   if (entries.length === 0) {
     $("participantList").innerHTML =
-      '<tr><td colspan="5">등록된 참가자가 없습니다.</td></tr>';
+      '<tr><td colspan="6">등록된 참가자가 없습니다.</td></tr>';
   } else {
     $("participantList").innerHTML = entries.map((entry, index) => {
-      const info = (entry.student_info || "").trim();
-      const firstSpace = info.indexOf(" ");
-      const studentId = firstSpace === -1 ? info : info.slice(0, firstSpace);
-      const studentName = firstSpace === -1 ? "" : info.slice(firstSpace + 1);
+      const info = splitStudentInfo(entry.student_info);
 
       const status = entry.drawn_at
         ? '<span class="winner">당첨</span>'
@@ -309,13 +357,27 @@ async function loadEntries() {
 
       const date = new Date(entry.created_at).toLocaleString("ko-KR");
 
+      const deleteButton = entry.drawn_at
+        ? '<button class="delete" disabled title="추첨된 학생은 삭제할 수 없습니다.">삭제 불가</button>'
+        : '<button class="delete" data-action="delete" data-id="' + escapeHTML(entry.id) + '">삭제</button>';
+
       return `
         <tr>
           <td>${index + 1}</td>
-          <td>${escapeHTML(studentId)}</td>
-          <td>${escapeHTML(studentName)}</td>
+          <td>${escapeHTML(info.studentId)}</td>
+          <td>${escapeHTML(info.studentName)}</td>
           <td>${status}</td>
-          <td>${date}</td>
+          <td>${escapeHTML(date)}</td>
+          <td>
+            <button class="edit"
+              data-action="edit"
+              data-id="${escapeHTML(entry.id)}"
+              data-student-id="${escapeHTML(info.studentId)}"
+              data-student-name="${escapeHTML(info.studentName)}">
+              수정
+            </button>
+            ${deleteButton}
+          </td>
         </tr>
       `;
     }).join("");
@@ -325,14 +387,112 @@ async function loadEntries() {
     "마지막 업데이트: " + new Date().toLocaleTimeString("ko-KR");
 }
 
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+$("participantList").addEventListener("click", event => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const id = button.dataset.id;
+
+  if (button.dataset.action === "edit") {
+    startEdit(
+      id,
+      button.dataset.studentId,
+      button.dataset.studentName
+    );
+  }
+
+  if (button.dataset.action === "delete") {
+    deleteEntry(id);
+  }
+});
+
+function startEdit(id, studentId, studentName) {
+  editingId = id;
+
+  $("editStudentId").value = studentId || "";
+  $("editStudentName").value = studentName || "";
+  $("editStatus").textContent = "";
+
+  $("editPanel").classList.remove("hidden");
+  $("editPanel").scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+function cancelEdit() {
+  editingId = null;
+  $("editPanel").classList.add("hidden");
+  $("editStudentId").value = "";
+  $("editStudentName").value = "";
+  $("editStatus").textContent = "";
+}
+
+async function saveEdit() {
+  if (!editingId) return;
+
+  const studentId = $("editStudentId").value.trim();
+  const studentName = $("editStudentName").value.trim();
+
+  if (!studentId || !studentName) {
+    $("editStatus").textContent = "학번과 이름을 모두 입력하세요.";
+    return;
+  }
+
+  const studentInfo = studentId + " " + studentName;
+
+  $("saveEditBtn").disabled = true;
+  $("editStatus").textContent = "수정 중...";
+
+  try {
+    const { data: userData } = await db.auth.getUser();
+
+    if (!userData.user || userData.user.id !== ADMIN_UID) {
+      throw new Error("관리자 로그인이 필요합니다.");
+    }
+
+    const { error } = await db.rpc("dokdo_admin_update_entry", {
+      p_id: editingId,
+      p_student_info: studentInfo
+    });
+
+    if (error) throw error;
+
+    alert("학생 정보가 수정되었습니다.");
+    cancelEdit();
+    await loadEntries();
+
+  } catch (error) {
+    $("editStatus").textContent = "수정 실패: " + error.message;
+  } finally {
+    $("saveEditBtn").disabled = false;
+  }
+}
+
+async function deleteEntry(id) {
+  if (!confirm("이 참가자를 정말 삭제할까요?\n삭제한 정보는 복구할 수 없습니다.")) {
+    return;
+  }
+
+  try {
+    const { data: userData } = await db.auth.getUser();
+
+    if (!userData.user || userData.user.id !== ADMIN_UID) {
+      throw new Error("관리자 로그인이 필요합니다.");
+    }
+
+    const { error } = await db.rpc("dokdo_admin_delete_entry", {
+      p_id: id
+    });
+
+    if (error) throw error;
+
+    alert("참가자가 삭제되었습니다.");
+    await loadEntries();
+
+  } catch (error) {
+    alert("삭제 실패: " + error.message);
+  }
 }
 
 async function drawWinner() {
@@ -359,14 +519,12 @@ async function drawWinner() {
       throw new Error("추첨 결과가 없습니다.");
     }
 
-    const info = data[0].student_info || "";
-    const space = info.indexOf(" ");
-    const studentId = space === -1 ? info : info.slice(0, space);
-    const studentName = space === -1 ? "" : info.slice(space + 1);
+    const info = splitStudentInfo(data[0].student_info);
 
     $("result").innerHTML =
       "🎉 당첨자 발표 🎉<br><br>" +
-      escapeHTML(studentId) + " " + escapeHTML(studentName);
+      escapeHTML(info.studentId) + " " +
+      escapeHTML(info.studentName);
 
     $("result").classList.remove("hidden");
     $("drawStatus").textContent = "추첨이 완료되었습니다.";
