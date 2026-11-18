@@ -173,34 +173,18 @@ button:disabled{
  overflow:hidden;
 }
 
-/* 가운데 축 */
-.drum::before{
- content:"";
- position:absolute;
- width:12px;
- height:12px;
- border-radius:50%;
- background:#315f82;
- left:50%;
- top:50%;
- transform:translate(-50%,-50%);
- z-index:5;
- box-shadow:0 0 0 5px #ffffff88;
- pointer-events:none;
-}
-
 /* 통 안의 공 */
 .lotto-ball{
  position:absolute;
- width:26px;
- height:26px;
+ width:22px;
+ height:22px;
  left:0;
  top:0;
  border-radius:50%;
  display:flex;
  align-items:center;
  justify-content:center;
- font-size:10px;
+ font-size:9px;
  font-weight:bold;
  color:#173f67;
  background:radial-gradient(circle at 30% 25%,#fff,#e5f2fc 55%,#9fc3e2);
@@ -417,8 +401,7 @@ const db = window.supabase.createClient(
 let isAdmin = false;
 let isDrawing = false;
 
-/* 공의 움직임을 계산하는 물리 효과 */
-const drum = document.getElementById("drum");
+/* 공의 움직임 */
 const ballElements = [...document.querySelectorAll(".lotto-ball")];
 
 const CENTER = 64;
@@ -427,14 +410,14 @@ const WALL_RADIUS = 55;
 
 const balls = ballElements.map((element,i)=>{
  const angle = (Math.PI*2*i)/ballElements.length;
- const distance = 22 + (i%3)*12;
+ const distance = 20 + (i%3)*13;
 
  return {
   element,
   x:CENTER + Math.cos(angle)*distance,
   y:CENTER + Math.sin(angle)*distance,
-  vx:Math.sin(i*4+1)*0.5,
-  vy:Math.cos(i*3+2)*0.5,
+  vx:Math.sin(i*4+1)*0.8,
+  vy:Math.cos(i*3+2)*0.8,
   rotation:0
  };
 });
@@ -443,23 +426,23 @@ function animateBalls(){
  const mixing = isDrawing;
 
  balls.forEach((ball,i)=>{
-  // 중력
-  ball.vy += mixing ? 0.075 : 0.035;
+  // 중력: 평소에도 아래로 떨어짐
+  ball.vy += mixing ? 0.16 : 0.10;
 
-  // 공이 굴러다니도록 작은 힘을 계속 가함
-  const movement = mixing ? 0.8 : 0.10;
+  // 공의 불규칙한 움직임
+  const movement = mixing ? 1 : 0.15;
 
   ball.vx += Math.sin(Date.now()/350+i*3)*movement*0.035;
   ball.vy += Math.cos(Date.now()/400+i*2)*movement*0.025;
 
-  // 추첨 중에는 불규칙하게 튀는 힘 추가
+  // 추첨 중에는 더 강하게 튀어 오름
   if(mixing){
-   ball.vx += (Math.random()-0.5)*0.24;
-   ball.vy += (Math.random()-0.5)*0.24;
+   ball.vx += (Math.random()-0.5)*0.35;
+   ball.vy += (Math.random()-0.5)*0.35;
   }
 
   // 속도 제한
-  const maxSpeed = mixing ? 4.5 : 1.4;
+  const maxSpeed = mixing ? 5 : 2;
   const speed = Math.hypot(ball.vx,ball.vy);
 
   if(speed>maxSpeed){
@@ -467,11 +450,11 @@ function animateBalls(){
    ball.vy = ball.vy/speed*maxSpeed;
   }
 
-  // 위치 이동
+  // 이동
   ball.x += ball.vx;
   ball.y += ball.vy;
 
-  // 원형 통 벽과 충돌
+  // 원형 통의 벽과 충돌
   const dx = ball.x-CENTER;
   const dy = ball.y-CENTER;
   const distance = Math.hypot(dx,dy);
@@ -486,16 +469,15 @@ function animateBalls(){
 
    const dot = ball.vx*nx+ball.vy*ny;
 
-   ball.vx -= 1.85*dot*nx;
-   ball.vy -= 1.85*dot*ny;
+   ball.vx -= 1.9*dot*nx;
+   ball.vy -= 1.9*dot*ny;
 
-   // 벽에 닿을 때 마찰
-   ball.vx *= 0.94;
-   ball.vy *= 0.94;
+   ball.vx *= 0.98;
+   ball.vy *= 0.98;
   }
  });
 
- // 공끼리 부딪히는 효과
+ // 공끼리 충돌
  for(let i=0;i<balls.length;i++){
   for(let j=i+1;j<balls.length;j++){
    const a=balls[i];
@@ -526,7 +508,7 @@ function animateBalls(){
      (b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
 
     if(relativeVelocity<0){
-     const impulse=relativeVelocity*0.88;
+     const impulse=relativeVelocity*1.7;
      a.vx+=impulse*nx;
      a.vy+=impulse*ny;
      b.vx-=impulse*nx;
@@ -536,9 +518,9 @@ function animateBalls(){
   }
  }
 
- // 공 위치와 회전 적용
+ // 화면에 공의 위치 반영
  balls.forEach(ball=>{
-  ball.rotation += Math.hypot(ball.vx,ball.vy)*2.5;
+  ball.rotation += Math.hypot(ball.vx,ball.vy)*3;
 
   ball.element.style.left=(ball.x-BALL_RADIUS)+"px";
   ball.element.style.top=(ball.y-BALL_RADIUS)+"px";
