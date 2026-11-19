@@ -6,27 +6,147 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>세계 국가 찾기 퀴즈</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,"Malgun Gothic",sans-serif}
-header{background:#173b70;color:white;text-align:center;padding:18px;font-size:23px;font-weight:bold}
-main{max-width:1100px;margin:22px auto;padding:14px}
-.panel{background:white;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 3px 14px #0001}
-input,button,select{font-size:16px;padding:12px;border-radius:8px}
-input,select{width:100%;border:1px solid #cbd5e1;margin:7px 0 15px}
-button{border:0;background:#2464b4;color:white;font-weight:bold;cursor:pointer}
-button:hover{filter:brightness(.93)}
-.hidden{display:none!important}
-.levels{display:flex;gap:10px}
-.levels button{flex:1}
-#map{height:490px;background:#b9dce9;border-radius:12px}
-.info{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-weight:bold}
-.question{text-align:center;font-size:27px;font-weight:bold;margin:18px}
-#message{text-align:center;min-height:30px;font-weight:bold;margin:12px}
-.small{font-size:13px;color:#64748b}
-table{border-collapse:collapse;width:100%;margin-top:12px}
-th,td{padding:9px;text-align:center;border-bottom:1px solid #e2e8f0}
-th{background:#edf3fa}
+
+body{
+ margin:0;
+ background:#f1f5f9;
+ color:#172033;
+ font-family:Arial,"Malgun Gothic",sans-serif;
+}
+
+/* 상단 지구 사진 + 제목 */
+header{
+ height:260px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
+ color:white;
+ background:
+ linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.48)),
+ url("https://upload.wikimedia.org/wikipedia/commons/c/cb/The_Blue_Marble_%28remastered%29.jpg")
+ center 48% / cover no-repeat;
+}
+
+.hero-title{
+ padding:20px;
+}
+
+.hero-title h1{
+ font-size:36px;
+ margin:0;
+ font-weight:bold;
+ text-shadow:0 2px 10px #000;
+}
+
+.hero-title p{
+ font-size:16px;
+ margin-top:13px;
+ text-shadow:0 2px 7px #000;
+}
+
+main{
+ max-width:1100px;
+ margin:22px auto;
+ padding:14px;
+}
+
+.panel{
+ background:white;
+ border-radius:14px;
+ padding:22px;
+ margin-bottom:18px;
+ box-shadow:0 3px 14px #0001;
+}
+
+input,button,select{
+ font-size:16px;
+ padding:12px;
+ border-radius:8px;
+}
+
+input,select{
+ width:100%;
+ border:1px solid #cbd5e1;
+ margin:7px 0 15px;
+}
+
+button{
+ border:0;
+ background:#2464b4;
+ color:white;
+ font-weight:bold;
+ cursor:pointer;
+}
+
+button:hover{
+ filter:brightness(.93);
+}
+
+.hidden{
+ display:none!important;
+}
+
+.levels{
+ display:flex;
+ gap:10px;
+}
+
+.levels button{
+ flex:1;
+}
+
+#map{
+ height:490px;
+ background:#b9dce9;
+ border-radius:12px;
+}
+
+.info{
+ display:flex;
+ justify-content:space-between;
+ gap:12px;
+ flex-wrap:wrap;
+ font-weight:bold;
+}
+
+.question{
+ text-align:center;
+ font-size:27px;
+ font-weight:bold;
+ margin:18px;
+}
+
+#message{
+ text-align:center;
+ min-height:30px;
+ font-weight:bold;
+ margin:12px;
+}
+
+.small{
+ font-size:13px;
+ color:#64748b;
+}
+
+table{
+ border-collapse:collapse;
+ width:100%;
+ margin-top:12px;
+}
+
+th,td{
+ padding:9px;
+ text-align:center;
+ border-bottom:1px solid #e2e8f0;
+}
+
+th{
+ background:#edf3fa;
+}
 
 /* 난이도별 등수 표시 */
 .rank-badge{
@@ -37,76 +157,145 @@ th{background:#edf3fa}
  border-radius:6px;
  white-space:nowrap;
 }
+
 .rank-1{
  background:#fee2e2;
  color:#dc2626;
 }
+
 .rank-2{
  background:#fef3c7;
  color:#a16207;
 }
+
 .rank-3{
  background:#dcfce7;
  color:#15803d;
 }
+
+@media(max-width:600px){
+ header{
+  height:190px;
+ }
+
+ .hero-title h1{
+  font-size:25px;
+ }
+
+ .hero-title p{
+  font-size:13px;
+ }
+
+ main{
+  margin:12px auto;
+  padding:10px;
+ }
+
+ .panel{
+  padding:16px;
+ }
+
+ #map{
+  height:400px;
+ }
+
+ .question{
+  font-size:22px;
+ }
+
+ .info{
+  font-size:14px;
+ }
+}
 </style>
 </head>
+
 <body>
-<header>🌍 세계 국가 찾기 퀴즈</header>
+
+<header>
+ <div class="hero-title">
+  <h1>🌍 세계 국가 찾기 퀴즈</h1>
+  <p>지도를 탐험하며 세계 곳곳의 국가를 찾아보세요!</p>
+ </div>
+</header>
+
 <main>
 
 <section id="start" class="panel">
 <h2>게임 시작</h2>
+
 <label>학번</label>
 <input id="studentId" placeholder="학번 입력">
+
 <label>이름</label>
 <input id="studentName" placeholder="이름 입력">
+
 <p>난이도를 선택하세요.</p>
+
 <div class="levels">
 <button onclick="startGame('하')">하</button>
 <button onclick="startGame('중')">중</button>
 <button onclick="startGame('상')">상</button>
 </div>
+
 <p class="small">제한 시간 60초 · 한 국가당 최대 3회 오답</p>
 </section>
 
 <section id="game" class="panel hidden">
+
 <div class="info">
 <span id="levelText"></span>
 <span>남은 시간: <b id="timer">60</b>초</span>
 <span>점수: <b id="score">0</b>점</span>
 <span>문제: <b id="questionNumber">1</b></span>
 </div>
+
 <div id="question" class="question">국가를 찾으세요!</div>
+
 <div id="map"></div>
+
 <div id="message"></div>
+
 <button style="width:100%" onclick="endGame()">게임 종료</button>
+
 </section>
 
 <section id="result" class="panel hidden">
+
 <h2>게임 결과</h2>
+
 <p id="resultText"></p>
 <p id="saveMessage">점수를 저장하고 있습니다.</p>
+
 <button onclick="location.reload()">처음으로</button>
+
 </section>
 
 <section class="panel">
+
 <h2>🏆 통합 점수판</h2>
+
 <label>난이도 선택</label>
+
 <select id="boardLevel" onchange="loadScores()">
 <option value="전체">전체</option>
 <option value="하">하</option>
 <option value="중">중</option>
 <option value="상">상</option>
 </select>
+
 <button onclick="loadScores()">점수판 새로고침</button>
+
 <div id="board">점수판을 불러오는 중...</div>
+
 </section>
 
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
+
 // Supabase 연결 정보
 const SUPABASE_URL = "https://grjysehvlabnyenorkfp.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L-X2UFs2cCARxgd14Fw2IQ_4MAEePxJ";
@@ -177,6 +366,7 @@ function show(id){
 }
 
 function startGame(selected){
+
  studentId=document.getElementById("studentId").value.trim();
  studentName=document.getElementById("studentName").value.trim();
 
@@ -209,9 +399,17 @@ function startGame(selected){
 }
 
 function initMap(){
- if(map){map.remove();map=null;}
 
- map=L.map("map",{zoomControl:true,scrollWheelZoom:true}).setView([20,0],2);
+ if(map){
+  map.remove();
+  map=null;
+ }
+
+ map=L.map("map",{
+  zoomControl:true,
+  scrollWheelZoom:true
+ }).setView([20,0],2);
+
  map.setMaxBounds([[-85,-180],[85,180]]);
  map.on("click",()=>{});
 
@@ -221,29 +419,48 @@ function initMap(){
   return r.json();
  })
  .then(data=>{
+
   geoData=data;
+
   geoLayer=L.geoJSON(data,{
-   style:()=>({color:"#64748b",weight:1,fillColor:"#dce6ef",fillOpacity:.85}),
+   style:()=>({
+    color:"#64748b",
+    weight:1,
+    fillColor:"#dce6ef",
+    fillOpacity:.85
+   }),
+
    onEachFeature:(feature,layer)=>{
     layer.on("click",()=>checkCountry(feature,layer));
    }
+
   }).addTo(map);
 
   map.fitWorld();
   nextQuestion();
+
  })
  .catch(()=>{
-  document.getElementById("message").textContent="지도 데이터를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.";
+  document.getElementById("message").textContent=
+  "지도 데이터를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.";
  });
 }
 
 function getCode(feature){
+
  const p=feature.properties||{};
- return p["ISO3166-1-Alpha-3"]||p.ISO_A3_EH||p.ISO_A3||
- p.ADM0_A3||p.SOV_A3||p.ISO3||"";
+
+ return p["ISO3166-1-Alpha-3"]||
+ p.ISO_A3_EH||
+ p.ISO_A3||
+ p.ADM0_A3||
+ p.SOV_A3||
+ p.ISO3||
+ "";
 }
 
 function nextQuestion(){
+
  if(finished)return;
 
  const available=currentList.filter(c=>!asked.has(c[0]));
@@ -257,46 +474,74 @@ function nextQuestion(){
  asked.add(current[0]);
  wrong=0;
 
- document.getElementById("question").textContent=current[1]+"을(를) 지도에서 찾으세요!";
+ document.getElementById("question").textContent=
+ current[1]+"을(를) 지도에서 찾으세요!";
+
  document.getElementById("message").textContent="첫 번째 시도입니다.";
+
  document.getElementById("questionNumber").textContent=asked.size;
 
  resetMapStyle();
 }
 
 function resetMapStyle(){
+
  if(!geoLayer)return;
 
  geoLayer.eachLayer(layer=>{
-  layer.setStyle({color:"#64748b",weight:1,fillColor:"#dce6ef",fillOpacity:.85});
+  layer.setStyle({
+   color:"#64748b",
+   weight:1,
+   fillColor:"#dce6ef",
+   fillOpacity:.85
+  });
  });
 }
 
 function checkCountry(feature,layer){
+
  if(finished||!current||!geoLayer)return;
 
  const code=getCode(feature);
 
  if(code===current[0]){
+
   const earned=wrong===0?3:wrong===1?2:1;
   score+=earned;
 
   document.getElementById("score").textContent=score;
-  layer.setStyle({fillColor:"#16a34a",color:"#166534",weight:2,fillOpacity:.9});
+
+  layer.setStyle({
+   fillColor:"#16a34a",
+   color:"#166534",
+   weight:2,
+   fillOpacity:.9
+  });
+
   document.getElementById("message").textContent="정답! +"+earned+"점";
 
   current=null;
   setTimeout(nextQuestion,850);
 
  }else{
+
   wrong++;
 
   if(wrong===1){
-   document.getElementById("message").textContent="틀렸어요! 다시 찾아보세요. (1/3)";
+
+   document.getElementById("message").textContent=
+   "틀렸어요! 다시 찾아보세요. (1/3)";
+
   }else if(wrong===2){
-   document.getElementById("message").textContent="힌트! 이 국가는 "+current[2]+" 대륙에 있습니다. (2/3)";
+
+   document.getElementById("message").textContent=
+   "힌트! 이 국가는 "+current[2]+" 대륙에 있습니다. (2/3)";
+
   }else{
-   document.getElementById("message").textContent="세 번 틀렸습니다. 정답은 "+current[1]+"입니다.";
+
+   document.getElementById("message").textContent=
+   "세 번 틀렸습니다. 정답은 "+current[1]+"입니다.";
+
    highlightAnswer();
    current=null;
    setTimeout(nextQuestion,1500);
@@ -305,16 +550,26 @@ function checkCountry(feature,layer){
 }
 
 function highlightAnswer(){
+
  if(!geoLayer||!current)return;
 
  geoLayer.eachLayer(layer=>{
+
   if(getCode(layer.feature)===current[0]){
-   layer.setStyle({fillColor:"#16a34a",color:"#166534",weight:2,fillOpacity:.95});
+
+   layer.setStyle({
+    fillColor:"#16a34a",
+    color:"#166534",
+    weight:2,
+    fillOpacity:.95
+   });
+
   }
  });
 }
 
 async function endGame(){
+
  if(finished)return;
 
  finished=true;
@@ -324,27 +579,36 @@ async function endGame(){
  studentName+"님의 "+level+" 난이도 결과: "+score+"점";
 
  show("result");
- document.getElementById("saveMessage").textContent="점수를 저장하고 있습니다.";
+
+ document.getElementById("saveMessage").textContent=
+ "점수를 저장하고 있습니다.";
 
  await saveScore();
  await loadScores();
 }
 
 async function saveScore(){
+
  if(!SUPABASE_KEY||SUPABASE_KEY==="YOUR_PUBLISHABLE_KEY"){
-  document.getElementById("saveMessage").textContent="Supabase 공개 키를 입력해야 점수가 저장됩니다.";
+
+  document.getElementById("saveMessage").textContent=
+  "Supabase 공개 키를 입력해야 점수가 저장됩니다.";
+
   return;
  }
 
  try{
+
   const response=await fetch(SUPABASE_URL+"/rest/v1/game_scores",{
    method:"POST",
+
    headers:{
     "apikey":SUPABASE_KEY,
     "Authorization":"Bearer "+SUPABASE_KEY,
     "Content-Type":"application/json",
     "Prefer":"return=minimal"
    },
+
    body:JSON.stringify({
     student_id:studentId,
     student_name:studentName,
@@ -355,24 +619,33 @@ async function saveScore(){
 
   if(!response.ok)throw new Error(await response.text());
 
-  document.getElementById("saveMessage").textContent="점수가 성공적으로 저장되었습니다!";
+  document.getElementById("saveMessage").textContent=
+  "점수가 성공적으로 저장되었습니다!";
 
  }catch(e){
-  document.getElementById("saveMessage").textContent="점수 저장 실패: "+e.message;
+
+  document.getElementById("saveMessage").textContent=
+  "점수 저장 실패: "+e.message;
+
  }
 }
 
 async function loadScores(){
+
  const board=document.getElementById("board");
 
  if(!SUPABASE_KEY||SUPABASE_KEY==="YOUR_PUBLISHABLE_KEY"){
-  board.textContent="Supabase 공개 키를 입력한 뒤 점수판을 사용할 수 있습니다.";
+
+  board.textContent=
+  "Supabase 공개 키를 입력한 뒤 점수판을 사용할 수 있습니다.";
+
   return;
  }
 
  board.textContent="점수판을 불러오는 중...";
 
  try{
+
   const response=await fetch(
    SUPABASE_URL+"/rest/v1/game_scores?select=student_id,student_name,difficulty,score,created_at&order=score.desc,created_at.asc&limit=100",
    {
@@ -393,6 +666,7 @@ async function loadScores(){
   const levels=["상","중","하"];
 
   levels.forEach(levelName=>{
+
    const levelRows=rows
     .filter(r=>r.difficulty===levelName)
     .sort((a,b)=>
@@ -403,6 +677,7 @@ async function loadScores(){
    levelRows.forEach((r,index)=>{
     r.levelRank=index+1;
    });
+
   });
 
   const filter=document.getElementById("boardLevel").value;
@@ -429,16 +704,21 @@ async function loadScores(){
    "</tr></thead><tbody>"+
 
    rows.map(r=>{
+
     const rank=r.levelRank;
     let rankText;
 
     if(rank<=3){
+
      rankText=
       '<span class="rank-badge rank-'+rank+'">'+
       escapeHTML(r.difficulty)+" "+rank+"등!"+
       "</span>";
+
     }else{
+
      rankText=escapeHTML(r.difficulty)+" "+rank+"등";
+
     }
 
     return "<tr>"+
@@ -448,16 +728,20 @@ async function loadScores(){
      "<td>"+escapeHTML(r.difficulty)+"</td>"+
      "<td>"+escapeHTML(r.score)+"점</td>"+
      "</tr>";
+
    }).join("")+
 
    "</tbody></table>";
 
  }catch(e){
+
   board.textContent=e.message;
+
  }
 }
 
 function escapeHTML(value){
+
  return String(value).replace(/[&<>"']/g,c=>({
   "&":"&amp;",
   "<":"&lt;",
@@ -465,9 +749,11 @@ function escapeHTML(value){
   '"':"&quot;",
   "'":"&#39;"
  }[c]));
+
 }
 
 loadScores();
+
 </script>
 </body>
 </html>
