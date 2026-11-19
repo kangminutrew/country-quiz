@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>독도 삼행시</title>
+<title>독도 이행시</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -27,7 +27,7 @@ body{
  background-color:#174b70;
  background-image:
  linear-gradient(rgba(4,24,45,.35),rgba(4,24,45,.48)),
- url("https://www.jbe.go.kr/dokdo/assets/images/sub/picture_image01.jpg");
+ url("https://dokdo.mofa.go.kr/_editorUpload/images/a1461897620871k.jpg");
  background-position:center 48%;
  background-size:cover;
  background-repeat:no-repeat;
@@ -267,7 +267,7 @@ footer a{color:#8492a2}
  <div class="hero-content">
   <div class="flag">🇰🇷</div>
   <div class="eyebrow">OUR BEAUTIFUL ISLAND</div>
-  <h1></h1>
+  <h1>독도 이행시</h1>
   <div class="gold-line"></div>
   <p>
    독도를 향한 마음을 담아,<br>
@@ -351,7 +351,7 @@ footer a{color:#8492a2}
  </section>
 
  <section class="panel">
-  <h2>🌊 독도 삼행시 이벤트</h2>
+  <h2>🌊 독도 이행시 이벤트</h2>
   <p class="small">
    참가자 등록은 누구나 할 수 있습니다.<br>
    공정한 추첨을 위해 추첨 권한은 관리자에게만 있습니다.
@@ -363,9 +363,9 @@ footer a{color:#8492a2}
 <footer>
  아름다운 우리 섬, 독도 🇰🇷<br>
  사진 출처:
- <a href="https://www.jbe.go.kr/dokdo/assets/images/sub/picture_image02.jpg"
+ <a href="https://dokdo.mofa.go.kr/kor/pds/gallery_list.jsp?pagenumber=1&sn=&st=&sn02=&st02=&sn03=&st03=A&sc=&sdate=&edate=&orderby=&sort=&status=&at=view&idx=1565&category=kr"
  target="_blank" rel="noopener">
- 전북특별자치도교육청
+ 외교부 독도 갤러리
  </a>
 </footer>
 
@@ -413,30 +413,25 @@ const balls = ballElements.map((element,i)=>{
 function animateBalls(time){
  if(!previousTime) previousTime=time;
 
- // 프레임 간 시간 차이 보정
  const dt=Math.min((time-previousTime)/16.667,2);
  previousTime=time;
 
  const mixing=isDrawing;
 
  // 통 회전 속도
-const angularSpeed=mixing ? 0.039 : 0.026;
-drumAngle+=angularSpeed*dt;
+ const angularSpeed=mixing ? 0.039 : 0.026;
+ drumAngle+=angularSpeed*dt;
 
- // 통 자체 회전
  drum.style.transform=`rotate(${drumAngle*180/Math.PI}deg)`;
 
- // 회전하는 통 안에서 중력 방향 변화
  const gravity=0.075;
  const gravityX=gravity*Math.sin(drumAngle);
  const gravityY=gravity*Math.cos(drumAngle);
 
  balls.forEach(ball=>{
-  // 중력 적용
   ball.vx+=gravityX*dt;
   ball.vy+=gravityY*dt;
 
-  // 통 회전으로 인한 바깥쪽 힘
   const dx=ball.x-CENTER;
   const dy=ball.y-CENTER;
   const distance=Math.hypot(dx,dy);
@@ -451,11 +446,9 @@ drumAngle+=angularSpeed*dt;
    ball.vy+=ny*centrifugal*dt;
   }
 
-  // 공의 움직임에 약한 공기 저항
   ball.vx*=Math.pow(0.997,dt);
   ball.vy*=Math.pow(0.997,dt);
 
-  // 추첨 중에는 통의 회전이 빨라져 공도 더 활발히 움직임
   const maxSpeed=mixing?2.8:1.8;
   const speed=Math.hypot(ball.vx,ball.vy);
 
@@ -464,11 +457,9 @@ drumAngle+=angularSpeed*dt;
    ball.vy=ball.vy/speed*maxSpeed;
   }
 
-  // 위치 이동
   ball.x+=ball.vx*dt;
   ball.y+=ball.vy*dt;
 
-  // 원형 벽 충돌
   const wallDx=ball.x-CENTER;
   const wallDy=ball.y-CENTER;
   const wallDistance=Math.hypot(wallDx,wallDy);
@@ -488,7 +479,6 @@ drumAngle+=angularSpeed*dt;
     ball.vy-=bounce*ny;
    }
 
-   // 벽을 따라 미끄러지는 움직임
    const tangentX=-ny;
    const tangentY=nx;
 
@@ -520,7 +510,6 @@ drumAngle+=angularSpeed*dt;
     const nx=dx/distance;
     const ny=dy/distance;
 
-    // 겹친 부분만 부드럽게 분리
     const overlap=minDistance-distance;
     const correction=overlap*0.5;
 
@@ -532,7 +521,6 @@ drumAngle+=angularSpeed*dt;
     const relativeVelocity=
      (b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
 
-    // 서로 다가오는 경우에만 약하게 튕김
     if(relativeVelocity<0){
      const restitution=0.18;
      const impulse=-(1+restitution)*relativeVelocity/2;
@@ -548,7 +536,6 @@ drumAngle+=angularSpeed*dt;
 
  // 공 위치와 회전 표시
  balls.forEach(ball=>{
-  // 충돌 보정 후 통 밖으로 나가지 않도록 확인
   const dx=ball.x-CENTER;
   const dy=ball.y-CENTER;
   const distance=Math.hypot(dx,dy);
