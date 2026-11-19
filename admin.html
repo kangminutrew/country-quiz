@@ -8,9 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   font-family: Arial, sans-serif;
@@ -25,9 +23,7 @@ body {
   margin: auto;
 }
 
-h1 {
-  margin-bottom: 8px;
-}
+h1 { margin-bottom: 8px; }
 
 .panel {
   background: white;
@@ -52,30 +48,18 @@ button {
   border: none;
 }
 
-button.delete {
-  background: #d93636;
-}
+button.delete { background: #d93636; }
+button.gray { background: #666; }
+button:hover { opacity: .85; }
 
-button.gray {
-  background: #666;
-}
-
-button:hover {
-  opacity: .85;
-}
-
-#dashboard {
-  display: none;
-}
+#dashboard { display: none; }
 
 #message {
   margin: 10px 0;
   color: #2457d6;
 }
 
-.table-wrap {
-  overflow-x: auto;
-}
+.table-wrap { overflow-x: auto; }
 
 table {
   border-collapse: collapse;
@@ -90,18 +74,14 @@ th, td {
   text-align: left;
 }
 
-th {
-  background: #eef2fa;
-}
+th { background: #eef2fa; }
 
 .count {
   font-weight: bold;
   margin: 12px 0;
 }
 
-.scoreboard {
-  margin-top: 32px;
-}
+.scoreboard { margin-top: 32px; }
 
 .scoreboard h3 {
   display: flex;
@@ -131,20 +111,9 @@ th {
   white-space: nowrap;
 }
 
-.rank-1 {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.rank-2 {
-  background: #fef3c7;
-  color: #a16207;
-}
-
-.rank-3 {
-  background: #dcfce7;
-  color: #15803d;
-}
+.rank-1 { background: #fee2e2; color: #dc2626; }
+.rank-2 { background: #fef3c7; color: #a16207; }
+.rank-3 { background: #dcfce7; color: #15803d; }
 
 .rank-normal {
   color: #222;
@@ -158,17 +127,9 @@ th {
 }
 
 @media (max-width: 600px) {
-  body {
-    padding: 10px;
-  }
-
-  .panel {
-    padding: 14px;
-  }
-
-  .scoreboard h3 {
-    font-size: 17px;
-  }
+  body { padding: 10px; }
+  .panel { padding: 14px; }
+  .scoreboard h3 { font-size: 17px; }
 }
 </style>
 </head>
@@ -225,14 +186,14 @@ th {
 
 <!-- 상 -->
 <div class="scoreboard">
-
 <h3>
   상 난이도 스코어보드
 
   <select class="sort-select" id="sortHigh"
     onchange="changeSort('상', this.value)">
     <option value="rank">등수 순</option>
-    <option value="time">시간 순</option>
+    <option value="oldest">오래된 순</option>
+    <option value="newest">빠른 순</option>
   </select>
 </h3>
 
@@ -252,19 +213,18 @@ th {
 <tbody id="scoreListHigh"></tbody>
 </table>
 </div>
-
 </div>
 
 <!-- 중 -->
 <div class="scoreboard">
-
 <h3>
   중 난이도 스코어보드
 
   <select class="sort-select" id="sortMiddle"
     onchange="changeSort('중', this.value)">
     <option value="rank">등수 순</option>
-    <option value="time">시간 순</option>
+    <option value="oldest">오래된 순</option>
+    <option value="newest">빠른 순</option>
   </select>
 </h3>
 
@@ -284,19 +244,18 @@ th {
 <tbody id="scoreListMiddle"></tbody>
 </table>
 </div>
-
 </div>
 
 <!-- 하 -->
 <div class="scoreboard">
-
 <h3>
   하 난이도 스코어보드
 
   <select class="sort-select" id="sortLow"
     onchange="changeSort('하', this.value)">
     <option value="rank">등수 순</option>
-    <option value="time">시간 순</option>
+    <option value="oldest">오래된 순</option>
+    <option value="newest">빠른 순</option>
   </select>
 </h3>
 
@@ -316,7 +275,6 @@ th {
 <tbody id="scoreListLow"></tbody>
 </table>
 </div>
-
 </div>
 
 </div>
@@ -415,37 +373,41 @@ async function loadScores() {
   levels.forEach(level => {
 
     // 난이도별 기록 분리
-    const sorted = data
-      .filter(row => row.difficulty === level)
-      .sort((a, b) => {
+    const levelData = data.filter(row => row.difficulty === level);
 
-        // 시간 순: 최근 기록 먼저
-        if (sortModes[level] === "time") {
-          return new Date(b.created_at) - new Date(a.created_at);
-        }
+    // 화면 표시 순서 정하기
+    const sorted = [...levelData].sort((a, b) => {
 
-        // 등수 순: 높은 점수 먼저
-        const scoreDifference =
-          Number(b.score) - Number(a.score);
-
-        if (scoreDifference !== 0) {
-          return scoreDifference;
-        }
-
-        // 동점이면 먼저 등록한 기록 우선
+      // 오래된 순: 먼저 등록한 기록부터
+      if (sortModes[level] === "oldest") {
         return new Date(a.created_at) - new Date(b.created_at);
-      });
+      }
 
-    // 모든 학생에게 점수 기준 등수 부여
-    const rankSorted = data
-      .filter(row => row.difficulty === level)
-      .sort((a, b) => {
-        const difference = Number(b.score) - Number(a.score);
+      // 빠른 순: 나중에 등록한 기록부터
+      if (sortModes[level] === "newest") {
+        return new Date(b.created_at) - new Date(a.created_at);
+      }
 
-        if (difference !== 0) return difference;
+      // 등수 순: 높은 점수 먼저
+      const scoreDifference =
+        Number(b.score) - Number(a.score);
 
-        return new Date(a.created_at) - new Date(b.created_at);
-      });
+      if (scoreDifference !== 0) {
+        return scoreDifference;
+      }
+
+      // 동점이면 먼저 등록한 기록 우선
+      return new Date(a.created_at) - new Date(b.created_at);
+    });
+
+    // 등수는 정렬 방식과 관계없이 점수 기준으로 계산
+    const rankSorted = [...levelData].sort((a, b) => {
+      const difference = Number(b.score) - Number(a.score);
+
+      if (difference !== 0) return difference;
+
+      return new Date(a.created_at) - new Date(b.created_at);
+    });
 
     const rankMap = new Map();
 
