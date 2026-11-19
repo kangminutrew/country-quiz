@@ -2,240 +2,483 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>국가 찾기 게임 관리자</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f5f9;
-      margin: 0;
-      padding: 24px;
-      color: #222;
-    }
-    .container {
-      max-width: 1050px;
-      margin: auto;
-    }
-    h1 { margin-bottom: 8px; }
-    .panel {
-      background: white;
-      padding: 22px;
-      border-radius: 12px;
-      margin: 18px 0;
-      box-shadow: 0 2px 10px #00000010;
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px 3px;
-      border: 1px solid #ccc;
-      border-radius: 7px;
-      font-size: 14px;
-    }
-    button {
-      cursor: pointer;
-      background: #2457d6;
-      color: white;
-      border: none;
-    }
-    button.delete { background: #d93636; }
-    button.gray { background: #666; }
-    button:hover { opacity: .85; }
-    #dashboard { display: none; }
-    #message { margin: 10px 0; color: #2457d6; }
-    .table-wrap { overflow-x: auto; }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      background: white;
-      min-width: 720px;
-    }
-    th, td {
-      border-bottom: 1px solid #ddd;
-      padding: 11px 8px;
-      text-align: left;
-    }
-    th { background: #eef2fa; }
-    .count { font-weight: bold; margin: 12px 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>국가 찾기 게임 관리자</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    .rank-badge {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: bold;
-      padding: 4px 7px;
-      border-radius: 6px;
-      white-space: nowrap;
-    }
-    .rank-1 {
-      background: #fee2e2;
-      color: #dc2626;
-    }
-    .rank-2 {
-      background: #fef3c7;
-      color: #a16207;
-    }
-    .rank-3 {
-      background: #dcfce7;
-      color: #15803d;
-    }
-  </style>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f3f5f9;
+  margin: 0;
+  padding: 24px;
+  color: #222;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+}
+
+h1 {
+  margin-bottom: 8px;
+}
+
+.panel {
+  background: white;
+  padding: 22px;
+  border-radius: 12px;
+  margin: 18px 0;
+  box-shadow: 0 2px 10px #00000010;
+}
+
+input, button, select {
+  padding: 10px;
+  margin: 5px 3px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  font-size: 14px;
+}
+
+button {
+  cursor: pointer;
+  background: #2457d6;
+  color: white;
+  border: none;
+}
+
+button.delete {
+  background: #d93636;
+}
+
+button.gray {
+  background: #666;
+}
+
+button:hover {
+  opacity: .85;
+}
+
+#dashboard {
+  display: none;
+}
+
+#message {
+  margin: 10px 0;
+  color: #2457d6;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: white;
+  min-width: 700px;
+}
+
+th, td {
+  border-bottom: 1px solid #ddd;
+  padding: 11px 8px;
+  text-align: left;
+}
+
+th {
+  background: #eef2fa;
+}
+
+.count {
+  font-weight: bold;
+  margin: 12px 0;
+}
+
+.scoreboard {
+  margin-top: 32px;
+}
+
+.scoreboard h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.sort-select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  background: white;
+  font-size: 14px;
+}
+
+.rank-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 4px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.rank-1 {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.rank-2 {
+  background: #fef3c7;
+  color: #a16207;
+}
+
+.rank-3 {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.rank-normal {
+  color: #222;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.empty-message {
+  color: #888;
+  padding: 15px 8px;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
+
+  .scoreboard h3 {
+    font-size: 17px;
+  }
+}
+</style>
 </head>
+
 <body>
+
 <div class="container">
-  <h1>국가 찾기 게임 관리자</h1>
-  <p>관리자 계정으로 로그인해 참가자 점수를 관리합니다.</p>
 
-  <div class="panel" id="loginPanel">
-    <h2>관리자 로그인</h2>
-    <input id="email" type="email" placeholder="관리자 이메일">
-    <br>
-    <input id="password" type="password" placeholder="비밀번호">
-    <br>
-    <button onclick="login()">로그인</button>
-    <div id="loginMessage"></div>
-  </div>
+<h1>국가 찾기 게임 관리자</h1>
+<p>관리자 계정으로 로그인해 참가자 점수를 관리합니다.</p>
 
-  <div class="panel" id="resetPanel" style="display:none;">
-    <h2>새 관리자 비밀번호 설정</h2>
-    <p>새로운 비밀번호를 입력해 주세요.</p>
-    <input id="newPassword" type="password" placeholder="새 비밀번호 (6자 이상)">
-    <br>
-    <input id="confirmPassword" type="password" placeholder="새 비밀번호 확인">
-    <br>
-    <button onclick="updatePassword()">비밀번호 변경</button>
-    <div id="resetMessage"></div>
-  </div>
+<!-- 로그인 -->
+<div class="panel" id="loginPanel">
+  <h2>관리자 로그인</h2>
 
-  <div id="dashboard">
-    <div class="panel">
-      <h2>점수 관리</h2>
-      <button onclick="loadScores()">새로고침</button>
-      <button class="delete" onclick="deleteAll()">전체 기록 삭제</button>
-      <button class="gray" onclick="logout()">로그아웃</button>
-      <div id="message"></div>
-      <div class="count" id="count"></div>
+  <input id="email" type="email" placeholder="관리자 이메일">
+  <br>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>등수</th>
-              <th>학번</th>
-              <th>이름</th>
-              <th>난이도</th>
-              <th>점수</th>
-              <th>등록 시간</th>
-              <th>관리</th>
-            </tr>
-          </thead>
-          <tbody id="scoreList"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  <input id="password" type="password" placeholder="비밀번호">
+  <br>
+
+  <button onclick="login()">로그인</button>
+  <div id="loginMessage"></div>
+</div>
+
+<!-- 비밀번호 재설정 -->
+<div class="panel" id="resetPanel" style="display:none;">
+  <h2>새 관리자 비밀번호 설정</h2>
+  <p>새로운 비밀번호를 입력해 주세요.</p>
+
+  <input id="newPassword" type="password" placeholder="새 비밀번호 (6자 이상)">
+  <br>
+
+  <input id="confirmPassword" type="password" placeholder="새 비밀번호 확인">
+  <br>
+
+  <button onclick="updatePassword()">비밀번호 변경</button>
+  <div id="resetMessage"></div>
+</div>
+
+<!-- 관리자 대시보드 -->
+<div id="dashboard">
+
+<div class="panel">
+
+<h2>점수 관리</h2>
+
+<button onclick="loadScores()">새로고침</button>
+<button class="delete" onclick="deleteAll()">전체 기록 삭제</button>
+<button class="gray" onclick="logout()">로그아웃</button>
+
+<div id="message"></div>
+<div class="count" id="count"></div>
+
+<!-- 상 -->
+<div class="scoreboard">
+
+<h3>
+  상 난이도 스코어보드
+
+  <select class="sort-select" id="sortHigh"
+    onchange="changeSort('상', this.value)">
+    <option value="rank">등수 순</option>
+    <option value="time">시간 순</option>
+  </select>
+</h3>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+  <th>등수</th>
+  <th>학번</th>
+  <th>이름</th>
+  <th>난이도</th>
+  <th>점수</th>
+  <th>등록 시간</th>
+  <th>관리</th>
+</tr>
+</thead>
+<tbody id="scoreListHigh"></tbody>
+</table>
+</div>
+
+</div>
+
+<!-- 중 -->
+<div class="scoreboard">
+
+<h3>
+  중 난이도 스코어보드
+
+  <select class="sort-select" id="sortMiddle"
+    onchange="changeSort('중', this.value)">
+    <option value="rank">등수 순</option>
+    <option value="time">시간 순</option>
+  </select>
+</h3>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+  <th>등수</th>
+  <th>학번</th>
+  <th>이름</th>
+  <th>난이도</th>
+  <th>점수</th>
+  <th>등록 시간</th>
+  <th>관리</th>
+</tr>
+</thead>
+<tbody id="scoreListMiddle"></tbody>
+</table>
+</div>
+
+</div>
+
+<!-- 하 -->
+<div class="scoreboard">
+
+<h3>
+  하 난이도 스코어보드
+
+  <select class="sort-select" id="sortLow"
+    onchange="changeSort('하', this.value)">
+    <option value="rank">등수 순</option>
+    <option value="time">시간 순</option>
+  </select>
+</h3>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+  <th>등수</th>
+  <th>학번</th>
+  <th>이름</th>
+  <th>난이도</th>
+  <th>점수</th>
+  <th>등록 시간</th>
+  <th>관리</th>
+</tr>
+</thead>
+<tbody id="scoreListLow"></tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
 </div>
 
 <script>
-  const SUPABASE_URL = "https://grjysehvlabnyenorkfp.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_L-X2UFs2cCARxgd14Fw2IQ_4MAEePxJ";
 
-  const db = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
+// Supabase 연결
+const SUPABASE_URL = "https://grjysehvlabnyenorkfp.supabase.co";
+const SUPABASE_KEY = "sb_publishable_L-X2UFs2cCARxgd14Fw2IQ_4MAEePxJ";
 
-  function showMessage(message) {
-    document.getElementById("message").textContent = message;
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+// 난이도별 정렬 설정
+const sortModes = {
+  "상": "rank",
+  "중": "rank",
+  "하": "rank"
+};
+
+// 정렬 변경
+function changeSort(difficulty, mode) {
+  sortModes[difficulty] = mode;
+  loadScores();
+}
+
+// 메시지
+function showMessage(message) {
+  document.getElementById("message").textContent = message;
+}
+
+// 로그인
+async function login() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const output = document.getElementById("loginMessage");
+
+  output.textContent = "로그인 확인 중...";
+
+  const { data, error } = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    output.textContent = "로그인 실패: " + error.message;
+    return;
   }
 
-  async function login() {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
-    const output = document.getElementById("loginMessage");
+  document.getElementById("loginPanel").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
 
-    output.textContent = "로그인 확인 중...";
+  await loadScores();
+}
 
-    const { data, error } = await db.auth.signInWithPassword({
-      email,
-      password
-    });
+// 로그아웃
+async function logout() {
+  await db.auth.signOut();
 
-    if (error) {
-      output.textContent = "로그인 실패: " + error.message;
-      return;
-    }
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("loginPanel").style.display = "block";
+  document.getElementById("password").value = "";
+}
 
-    document.getElementById("loginPanel").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
-    await loadScores();
+// 점수 불러오기
+async function loadScores() {
+  showMessage("기록을 불러오는 중...");
+
+  const { data, error } = await db
+    .from("game_scores")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    showMessage("불러오기 실패: " + error.message);
+    return;
   }
 
-  async function logout() {
-    await db.auth.signOut();
-    document.getElementById("dashboard").style.display = "none";
-    document.getElementById("loginPanel").style.display = "block";
-    document.getElementById("password").value = "";
-  }
+  const lists = {
+    "상": document.getElementById("scoreListHigh"),
+    "중": document.getElementById("scoreListMiddle"),
+    "하": document.getElementById("scoreListLow")
+  };
 
-  async function loadScores() {
-    showMessage("기록을 불러오는 중...");
+  Object.values(lists).forEach(list => list.replaceChildren());
 
-    const { data, error } = await db
-      .from("game_scores")
-      .select("*")
-      .order("created_at", { ascending: false });
+  document.getElementById("count").textContent =
+    "전체 참가 기록: " + data.length + "개";
 
-    if (error) {
-      showMessage("불러오기 실패: " + error.message);
-      return;
-    }
+  const levels = ["상", "중", "하"];
 
-    const list = document.getElementById("scoreList");
-    list.replaceChildren();
+  levels.forEach(level => {
 
-    document.getElementById("count").textContent =
-      "전체 참가 기록: " + data.length + "개";
+    // 난이도별 기록 분리
+    const sorted = data
+      .filter(row => row.difficulty === level)
+      .sort((a, b) => {
 
-    // 난이도별 상위 3등 계산
-    const rankings = {};
+        // 시간 순: 최근 기록 먼저
+        if (sortModes[level] === "time") {
+          return new Date(b.created_at) - new Date(a.created_at);
+        }
 
-    ["상", "중", "하"].forEach(difficulty => {
-      const sorted = data
-        .filter(row => row.difficulty === difficulty)
-        .sort((a, b) => {
-          const scoreDiff = Number(b.score) - Number(a.score);
+        // 등수 순: 높은 점수 먼저
+        const scoreDifference =
+          Number(b.score) - Number(a.score);
 
-          if (scoreDiff !== 0) return scoreDiff;
+        if (scoreDifference !== 0) {
+          return scoreDifference;
+        }
 
-          return new Date(a.created_at) - new Date(b.created_at);
-        });
-
-      rankings[difficulty] = new Map();
-
-      sorted.slice(0, 3).forEach((row, index) => {
-        rankings[difficulty].set(row.id, index + 1);
+        // 동점이면 먼저 등록한 기록 우선
+        return new Date(a.created_at) - new Date(b.created_at);
       });
+
+    // 모든 학생에게 점수 기준 등수 부여
+    const rankSorted = data
+      .filter(row => row.difficulty === level)
+      .sort((a, b) => {
+        const difference = Number(b.score) - Number(a.score);
+
+        if (difference !== 0) return difference;
+
+        return new Date(a.created_at) - new Date(b.created_at);
+      });
+
+    const rankMap = new Map();
+
+    rankSorted.forEach((row, index) => {
+      rankMap.set(row.id, index + 1);
     });
 
-    data.forEach(row => {
+    sorted.forEach(row => {
+
+      const rank = rankMap.get(row.id);
       const tr = document.createElement("tr");
 
-      // 등수 표시
+      // 등수
       const rankCell = document.createElement("td");
-      const rank = rankings[row.difficulty]?.get(row.id);
+      const badge = document.createElement("span");
 
-      if (rank) {
-        const badge = document.createElement("span");
-        badge.className = "rank-badge rank-" + rank;
-        badge.textContent = row.difficulty + " " + rank + "등!";
-        rankCell.appendChild(badge);
+      badge.textContent =
+        level + " " + rank + "등" + (rank <= 3 ? "!" : "");
+
+      if (rank === 1) {
+        badge.className = "rank-badge rank-1";
+      } else if (rank === 2) {
+        badge.className = "rank-badge rank-2";
+      } else if (rank === 3) {
+        badge.className = "rank-badge rank-3";
       } else {
-        rankCell.textContent = "-";
+        badge.className = "rank-normal";
       }
 
+      rankCell.appendChild(badge);
       tr.appendChild(rankCell);
 
+      // 학생 정보
       const values = [
         row.student_id,
         row.student_name,
@@ -250,6 +493,7 @@
         tr.appendChild(td);
       });
 
+      // 관리 버튼
       const action = document.createElement("td");
 
       const editButton = document.createElement("button");
@@ -263,154 +507,172 @@
 
       action.append(editButton, deleteButton);
       tr.appendChild(action);
-      list.appendChild(tr);
+
+      lists[level].appendChild(tr);
     });
 
-    showMessage("기록을 불러왔습니다.");
-  }
+    if (sorted.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
 
-  async function editScore(row) {
-    const studentId = prompt("학번을 입력하세요.", row.student_id);
-    if (studentId === null) return;
+      td.colSpan = 7;
+      td.className = "empty-message";
+      td.textContent = "아직 등록된 기록이 없습니다.";
 
-    const studentName = prompt("이름을 입력하세요.", row.student_name);
-    if (studentName === null) return;
-
-    const difficulty = prompt("난이도: 하 / 중 / 상", row.difficulty);
-    if (difficulty === null) return;
-
-    const scoreText = prompt("점수 (0~90)", row.score);
-    if (scoreText === null) return;
-
-    const score = Number(scoreText);
-
-    if (!studentId.trim() || !studentName.trim()) {
-      alert("학번과 이름을 입력해 주세요.");
-      return;
-    }
-
-    if (!["하", "중", "상"].includes(difficulty)) {
-      alert("난이도는 하, 중, 상 중 하나여야 합니다.");
-      return;
-    }
-
-    if (!Number.isInteger(score) || score < 0 || score > 90) {
-      alert("점수는 0~90 사이의 정수여야 합니다.");
-      return;
-    }
-
-    const { error } = await db
-      .from("game_scores")
-      .update({
-        student_id: studentId.trim(),
-        student_name: studentName.trim(),
-        difficulty,
-        score
-      })
-      .eq("id", row.id);
-
-    if (error) {
-      alert("수정 실패: " + error.message);
-      return;
-    }
-
-    alert("수정되었습니다.");
-    await loadScores();
-  }
-
-  async function deleteScore(id) {
-    if (!confirm("이 참가 기록을 삭제할까요?")) return;
-
-    const { error } = await db
-      .from("game_scores")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      alert("삭제 실패: " + error.message);
-      return;
-    }
-
-    alert("삭제되었습니다.");
-    await loadScores();
-  }
-
-  async function deleteAll() {
-    if (!confirm("정말 모든 참가 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) {
-      return;
-    }
-
-    const { error } = await db
-      .from("game_scores")
-      .delete()
-      .gte("id", 0);
-
-    if (error) {
-      alert("전체 삭제 실패: " + error.message);
-      return;
-    }
-
-    alert("모든 기록이 삭제되었습니다.");
-    await loadScores();
-  }
-
-  // 비밀번호 재설정 링크를 통해 들어왔을 때
-  db.auth.onAuthStateChange((event, session) => {
-    if (event === "PASSWORD_RECOVERY") {
-      document.getElementById("loginPanel").style.display = "none";
-      document.getElementById("dashboard").style.display = "none";
-      document.getElementById("resetPanel").style.display = "block";
+      tr.appendChild(td);
+      lists[level].appendChild(tr);
     }
   });
 
-  // 새 비밀번호 저장
-  async function updatePassword() {
-    const password = document.getElementById("newPassword").value;
-    const confirmPassword = document.getElementById("confirmPassword").value;
-    const message = document.getElementById("resetMessage");
+  showMessage("기록을 불러왔습니다.");
+}
 
-    if (password.length < 6) {
-      message.textContent = "비밀번호는 6자 이상 입력해 주세요.";
-      return;
-    }
+// 점수 수정
+async function editScore(row) {
+  const studentId = prompt("학번을 입력하세요.", row.student_id);
+  if (studentId === null) return;
 
-    if (password !== confirmPassword) {
-      message.textContent = "두 비밀번호가 일치하지 않습니다.";
-      return;
-    }
+  const studentName = prompt("이름을 입력하세요.", row.student_name);
+  if (studentName === null) return;
 
-    message.textContent = "비밀번호 변경 중...";
+  const difficulty = prompt("난이도: 하 / 중 / 상", row.difficulty);
+  if (difficulty === null) return;
 
-    const { error } = await db.auth.updateUser({
-      password: password
-    });
+  const scoreText = prompt("점수 (0~90)", row.score);
+  if (scoreText === null) return;
 
-    if (error) {
-      message.textContent = "변경 실패: " + error.message;
-      return;
-    }
+  const score = Number(scoreText);
 
-    alert("비밀번호가 변경되었습니다. 다시 로그인해 주세요.");
-
-    await db.auth.signOut();
-
-    document.getElementById("resetPanel").style.display = "none";
-    document.getElementById("loginPanel").style.display = "block";
-    document.getElementById("password").value = "";
+  if (!studentId.trim() || !studentName.trim()) {
+    alert("학번과 이름을 입력해 주세요.");
+    return;
   }
 
-  // 페이지를 다시 열었을 때 기존 로그인 상태 확인
-  async function checkSession() {
-    const { data } = await db.auth.getSession();
-
-    if (data.session && !window.location.hash.includes("type=recovery")) {
-      document.getElementById("loginPanel").style.display = "none";
-      document.getElementById("dashboard").style.display = "block";
-      await loadScores();
-    }
+  if (!["하", "중", "상"].includes(difficulty)) {
+    alert("난이도는 하, 중, 상 중 하나여야 합니다.");
+    return;
   }
 
-  checkSession();
+  if (!Number.isInteger(score) || score < 0 || score > 90) {
+    alert("점수는 0~90 사이의 정수여야 합니다.");
+    return;
+  }
+
+  const { error } = await db
+    .from("game_scores")
+    .update({
+      student_id: studentId.trim(),
+      student_name: studentName.trim(),
+      difficulty,
+      score
+    })
+    .eq("id", row.id);
+
+  if (error) {
+    alert("수정 실패: " + error.message);
+    return;
+  }
+
+  alert("수정되었습니다.");
+  await loadScores();
+}
+
+// 개별 기록 삭제
+async function deleteScore(id) {
+  if (!confirm("이 참가 기록을 삭제할까요?")) return;
+
+  const { error } = await db
+    .from("game_scores")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("삭제 실패: " + error.message);
+    return;
+  }
+
+  alert("삭제되었습니다.");
+  await loadScores();
+}
+
+// 전체 기록 삭제
+async function deleteAll() {
+  if (!confirm("정말 모든 참가 기록을 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) {
+    return;
+  }
+
+  const { error } = await db
+    .from("game_scores")
+    .delete()
+    .gte("id", 0);
+
+  if (error) {
+    alert("전체 삭제 실패: " + error.message);
+    return;
+  }
+
+  alert("모든 기록이 삭제되었습니다.");
+  await loadScores();
+}
+
+// 비밀번호 재설정 링크 처리
+db.auth.onAuthStateChange((event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    document.getElementById("loginPanel").style.display = "none";
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("resetPanel").style.display = "block";
+  }
+});
+
+// 새 비밀번호 저장
+async function updatePassword() {
+  const password = document.getElementById("newPassword").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+  const message = document.getElementById("resetMessage");
+
+  if (password.length < 6) {
+    message.textContent = "비밀번호는 6자 이상 입력해 주세요.";
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    message.textContent = "두 비밀번호가 일치하지 않습니다.";
+    return;
+  }
+
+  message.textContent = "비밀번호 변경 중...";
+
+  const { error } = await db.auth.updateUser({
+    password: password
+  });
+
+  if (error) {
+    message.textContent = "변경 실패: " + error.message;
+    return;
+  }
+
+  alert("비밀번호가 변경되었습니다. 다시 로그인해 주세요.");
+
+  await db.auth.signOut();
+
+  document.getElementById("resetPanel").style.display = "none";
+  document.getElementById("loginPanel").style.display = "block";
+  document.getElementById("password").value = "";
+}
+
+// 기존 로그인 상태 확인
+async function checkSession() {
+  const { data } = await db.auth.getSession();
+
+  if (data.session && !window.location.hash.includes("type=recovery")) {
+    document.getElementById("loginPanel").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    await loadScores();
+  }
+}
+
+checkSession();
+
 </script>
 </body>
 </html>
