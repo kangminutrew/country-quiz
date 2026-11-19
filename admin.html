@@ -49,7 +49,7 @@
       border-collapse: collapse;
       width: 100%;
       background: white;
-      min-width: 650px;
+      min-width: 720px;
     }
     th, td {
       border-bottom: 1px solid #ddd;
@@ -58,6 +58,27 @@
     }
     th { background: #eef2fa; }
     .count { font-weight: bold; margin: 12px 0; }
+
+    .rank-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 4px 7px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .rank-1 {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    .rank-2 {
+      background: #fef3c7;
+      color: #a16207;
+    }
+    .rank-3 {
+      background: #dcfce7;
+      color: #15803d;
+    }
   </style>
 </head>
 <body>
@@ -75,7 +96,7 @@
     <div id="loginMessage"></div>
   </div>
 
-    <div class="panel" id="resetPanel" style="display:none;">
+  <div class="panel" id="resetPanel" style="display:none;">
     <h2>새 관리자 비밀번호 설정</h2>
     <p>새로운 비밀번호를 입력해 주세요.</p>
     <input id="newPassword" type="password" placeholder="새 비밀번호 (6자 이상)">
@@ -94,10 +115,12 @@
       <button class="gray" onclick="logout()">로그아웃</button>
       <div id="message"></div>
       <div class="count" id="count"></div>
+
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
+              <th>등수</th>
               <th>학번</th>
               <th>이름</th>
               <th>난이도</th>
@@ -114,7 +137,6 @@
 </div>
 
 <script>
-  // 아래 두 항목을 본인의 Supabase 정보로 바꿔 주세요.
   const SUPABASE_URL = "https://grjysehvlabnyenorkfp.supabase.co";
   const SUPABASE_KEY = "sb_publishable_L-X2UFs2cCARxgd14Fw2IQ_4MAEePxJ";
 
@@ -175,8 +197,44 @@
     document.getElementById("count").textContent =
       "전체 참가 기록: " + data.length + "개";
 
+    // 난이도별 상위 3등 계산
+    const rankings = {};
+
+    ["상", "중", "하"].forEach(difficulty => {
+      const sorted = data
+        .filter(row => row.difficulty === difficulty)
+        .sort((a, b) => {
+          const scoreDiff = Number(b.score) - Number(a.score);
+
+          if (scoreDiff !== 0) return scoreDiff;
+
+          return new Date(a.created_at) - new Date(b.created_at);
+        });
+
+      rankings[difficulty] = new Map();
+
+      sorted.slice(0, 3).forEach((row, index) => {
+        rankings[difficulty].set(row.id, index + 1);
+      });
+    });
+
     data.forEach(row => {
       const tr = document.createElement("tr");
+
+      // 등수 표시
+      const rankCell = document.createElement("td");
+      const rank = rankings[row.difficulty]?.get(row.id);
+
+      if (rank) {
+        const badge = document.createElement("span");
+        badge.className = "rank-badge rank-" + rank;
+        badge.textContent = row.difficulty + " " + rank + "등!";
+        rankCell.appendChild(badge);
+      } else {
+        rankCell.textContent = "-";
+      }
+
+      tr.appendChild(rankCell);
 
       const values = [
         row.student_id,
@@ -296,7 +354,6 @@
     await loadScores();
   }
 
- 
   // 비밀번호 재설정 링크를 통해 들어왔을 때
   db.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") {
