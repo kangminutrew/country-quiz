@@ -111,6 +111,32 @@ th { background: #f3f7fb; }
   font-weight: bold;
   margin-top: 10px;
 }
+.list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.list-heading h2 { margin: 0; }
+.count-label {
+  background: #edf5fc;
+  color: #1769aa;
+  padding: 7px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+}
+.winner-count {
+  background: #fff3df;
+  color: #b87815;
+}
+.empty {
+  text-align: center;
+  color: #8092a3;
+  padding: 24px;
+}
 @media(max-width:600px) {
   .cards { grid-template-columns: 1fr; }
   .panel { padding: 17px; }
@@ -186,8 +212,13 @@ th { background: #f3f7fb; }
       <p class="status" id="editStatus"></p>
     </div>
 
+    <!-- 추첨 대기자 명단 -->
     <div class="panel">
-      <h2>👥 참가자 명단</h2>
+      <div class="list-heading">
+        <h2>⏳ 추첨 대기자</h2>
+        <span class="count-label" id="waitingListCount">0명</span>
+      </div>
+
       <div class="table-wrap">
         <table>
           <thead>
@@ -195,13 +226,38 @@ th { background: #f3f7fb; }
               <th>번호</th>
               <th>학번</th>
               <th>이름</th>
-              <th>상태</th>
               <th>등록 시간</th>
               <th>관리</th>
             </tr>
           </thead>
-          <tbody id="participantList">
-            <tr><td colspan="6">불러오는 중...</td></tr>
+          <tbody id="waitingList">
+            <tr><td colspan="5" class="empty">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 당첨자 명단 -->
+    <div class="panel">
+      <div class="list-heading">
+        <h2>🏆 당첨자 명단</h2>
+        <span class="count-label winner-count" id="winnerListCount">0명</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>번호</th>
+              <th>학번</th>
+              <th>이름</th>
+              <th>등록 시간</th>
+              <th>상태</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="winnerList">
+            <tr><td colspan="6" class="empty">불러오는 중...</td></tr>
           </tbody>
         </table>
       </div>
@@ -315,10 +371,54 @@ function splitStudentInfo(info) {
   };
 }
 
+function makeEntryRow(entry, index, isWinner) {
+  const info = splitStudentInfo(entry.student_info);
+  const date = new Date(entry.created_at).toLocaleString("ko-KR");
+
+  const editButton = `
+    <button class="edit"
+      data-action="edit"
+      data-id="${escapeHTML(entry.id)}"
+      data-student-id="${escapeHTML(info.studentId)}"
+      data-student-name="${escapeHTML(info.studentName)}">
+      수정
+    </button>
+  `;
+
+  const deleteButton = isWinner
+    ? '<button class="delete" disabled title="추첨된 학생은 삭제할 수 없습니다.">삭제 불가</button>'
+    : `<button class="delete" data-action="delete" data-id="${escapeHTML(entry.id)}">삭제</button>`;
+
+  if (isWinner) {
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${escapeHTML(info.studentId)}</td>
+        <td>${escapeHTML(info.studentName)}</td>
+        <td>${escapeHTML(date)}</td>
+        <td><span class="winner">🏆 당첨</span></td>
+        <td>${editButton}${deleteButton}</td>
+      </tr>
+    `;
+  }
+
+  return `
+    <tr>
+      <td>${index + 1}</td>
+      <td>${escapeHTML(info.studentId)}</td>
+      <td>${escapeHTML(info.studentName)}</td>
+      <td>${escapeHTML(date)}</td>
+      <td>${editButton}${deleteButton}</td>
+    </tr>
+  `;
+}
+
 async function loadEntries() {
   $("listStatus").textContent = "참가자 정보를 불러오는 중...";
-  $("participantList").innerHTML =
-    '<tr><td colspan="6">불러오는 중...</td></tr>';
+  $("waitingList").innerHTML =
+    '<tr><td colspan="5" class="empty">불러오는 중...</td></tr>';
+  $("winnerList").innerHTML =
+    '<tr><td colspan="6" class="empty">불러오는 중...</td></tr>';
 
   const { data: userData } = await db.auth.getUser();
 
@@ -331,63 +431,51 @@ async function loadEntries() {
 
   if (error) {
     $("listStatus").textContent = "조회 실패: " + error.message;
-    $("participantList").innerHTML =
-      '<tr><td colspan="6">정보를 불러오지 못했습니다.</td></tr>';
+    $("waitingList").innerHTML =
+      '<tr><td colspan="5" class="empty">정보를 불러오지 못했습니다.</td></tr>';
+    $("winnerList").innerHTML =
+      '<tr><td colspan="6" class="empty">정보를 불러오지 못했습니다.</td></tr>';
     return;
   }
 
   const entries = data || [];
-  const drawn = entries.filter(e => e.drawn_at);
+
+  const winners = entries.filter(e => e.drawn_at);
   const waiting = entries.filter(e => !e.drawn_at);
 
   $("totalCount").textContent = entries.length + "명";
-  $("drawnCount").textContent = drawn.length + "명";
+  $("drawnCount").textContent = winners.length + "명";
   $("waitingCount").textContent = waiting.length + "명";
 
-  if (entries.length === 0) {
-    $("participantList").innerHTML =
-      '<tr><td colspan="6">등록된 참가자가 없습니다.</td></tr>';
+  $("waitingListCount").textContent = waiting.length + "명";
+  $("winnerListCount").textContent = winners.length + "명";
+
+  // 추첨 대기자 표시
+  if (waiting.length === 0) {
+    $("waitingList").innerHTML =
+      '<tr><td colspan="5" class="empty">추첨 대기자가 없습니다.</td></tr>';
   } else {
-    $("participantList").innerHTML = entries.map((entry, index) => {
-      const info = splitStudentInfo(entry.student_info);
+    $("waitingList").innerHTML = waiting.map((entry, index) =>
+      makeEntryRow(entry, index, false)
+    ).join("");
+  }
 
-      const status = entry.drawn_at
-        ? '<span class="winner">당첨</span>'
-        : "대기";
-
-      const date = new Date(entry.created_at).toLocaleString("ko-KR");
-
-      const deleteButton = entry.drawn_at
-        ? '<button class="delete" disabled title="추첨된 학생은 삭제할 수 없습니다.">삭제 불가</button>'
-        : '<button class="delete" data-action="delete" data-id="' + escapeHTML(entry.id) + '">삭제</button>';
-
-      return `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${escapeHTML(info.studentId)}</td>
-          <td>${escapeHTML(info.studentName)}</td>
-          <td>${status}</td>
-          <td>${escapeHTML(date)}</td>
-          <td>
-            <button class="edit"
-              data-action="edit"
-              data-id="${escapeHTML(entry.id)}"
-              data-student-id="${escapeHTML(info.studentId)}"
-              data-student-name="${escapeHTML(info.studentName)}">
-              수정
-            </button>
-            ${deleteButton}
-          </td>
-        </tr>
-      `;
-    }).join("");
+  // 당첨자 표시
+  if (winners.length === 0) {
+    $("winnerList").innerHTML =
+      '<tr><td colspan="6" class="empty">아직 당첨자가 없습니다.</td></tr>';
+  } else {
+    $("winnerList").innerHTML = winners.map((entry, index) =>
+      makeEntryRow(entry, index, true)
+    ).join("");
   }
 
   $("listStatus").textContent =
     "마지막 업데이트: " + new Date().toLocaleTimeString("ko-KR");
 }
 
-$("participantList").addEventListener("click", event => {
+// 두 명단의 수정 및 삭제 버튼 처리
+document.addEventListener("click", event => {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
 
@@ -529,6 +617,7 @@ async function drawWinner() {
     $("result").classList.remove("hidden");
     $("drawStatus").textContent = "추첨이 완료되었습니다.";
 
+    // 추첨 후 대기자와 당첨자 명단 모두 새로고침
     await loadEntries();
 
   } catch (error) {
